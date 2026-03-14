@@ -56,7 +56,7 @@ const Attendance = () => {
                 status: s.status === 'P' ? 'Present' : s.status === 'A' ? 'Absent' : 'Late'
             }))
 
-            await axios.post('http://localhost:5000/api/attendance/batch', {
+            await axios.post('/api/attendance/batch', {
                 records,
                 date: selectedDate
             }, {

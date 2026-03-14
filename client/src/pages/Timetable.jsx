@@ -26,7 +26,7 @@ const Timetable = () => {
         setLoading(true)
         try {
             const token = localStorage.getItem('token')
-            const { data } = await axios.get(`http://localhost:5000/api/timetable?className=${selectedClass}&section=${selectedSection}`, {
+            const { data } = await axios.get(`/api/timetable?className=${selectedClass}&section=${selectedSection}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             setTimetableData(data)

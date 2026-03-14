@@ -10,7 +10,7 @@ const Library = () => {
         setLoading(true)
         try {
             const token = localStorage.getItem('token')
-            const { data } = await axios.get('http://localhost:5000/api/library/books', {
+            const { data } = await axios.get('/api/library/books', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             setBooks(data)

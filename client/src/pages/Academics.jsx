@@ -18,7 +18,7 @@ const Academics = () => {
         setLoading(true)
         try {
             const token = localStorage.getItem('token')
-            const { data } = await axios.get('http://localhost:5000/api/academics/exams', {
+            const { data } = await axios.get('/api/academics/exams', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             setExams(data)

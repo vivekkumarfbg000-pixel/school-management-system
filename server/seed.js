@@ -32,10 +32,11 @@ async function main() {
   // Create admin user
   const hashedPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({
-    where: { username: 'admin' },
+    where: { email: 'admin@edustream.com' },
     update: {},
     create: {
       username: 'admin',
+      email: 'admin@edustream.com',
       password: hashedPassword,
       name: 'System Admin',
       role: 'ADMIN',

@@ -44,7 +44,7 @@ const Staff = () => {
         setSubmitting(true)
         try {
             const token = localStorage.getItem('token')
-            await axios.post('http://localhost:5000/api/staff', formData, {
+            await axios.post('/api/staff', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             alert("✅ Staff added successfully!")
@@ -76,6 +76,10 @@ const Staff = () => {
             alert("Failed to deactivate staff");
         }
     }
+
+    const totalStaff = staffList.length
+    const teachingCount = staffList.filter(s => s.type === 'Teaching').length
+    const nonTeachingCount = staffList.filter(s => s.type === 'Non-Teaching').length
 
     return (
         <div className="fade-in">

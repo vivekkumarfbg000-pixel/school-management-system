@@ -197,7 +197,8 @@ CREATE TABLE IF NOT EXISTS book_issues (
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  username TEXT UNIQUE NOT NULL,
+  username TEXT UNIQUE,
+  email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
   role TEXT NOT NULL,
   name TEXT NOT NULL,
