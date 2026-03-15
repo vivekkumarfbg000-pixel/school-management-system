@@ -8,6 +8,8 @@ const AIChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: 'Hello! How can I help you today? You can say things like "Go to Students" or "Show me fees".' }
   ]);
   const navigate = useNavigate();
   const { token } = useAuth();
