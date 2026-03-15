@@ -1,29 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
 const Library = () => {
     const [search, setSearch] = useState('')
-    const [books, setBooks] = useState([])
-    const [loading, setLoading] = useState(true)
 
-    const fetchBooks = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get('/api/library/books', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setBooks(data)
-        } catch (error) {
-            console.error("Error fetching books", error)
-        } finally {
-            setLoading(false)
+    const { data: books = [], isLoading } = useQuery({
+        queryKey: ['books'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/library/books')
+            return data
         }
-    }
-
-    useEffect(() => {
-        fetchBooks()
-    }, [])
+    })
 
     const filtered = books.filter(b => 
         b.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -42,12 +30,15 @@ const Library = () => {
                         onChange={e => setSearch(e.target.value)} 
                         style={{ padding: '0.6rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', width: '250px', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit' }} 
                     />
-                    <button className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>➕ Add Book</button>
+                    <button className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}>➕ Add Book</button>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem' }}>{books.length}</div><div className="stat-label">Total Titles</div></div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem' }}>{isLoading ? '...' : books.length}</div>
+                    <div className="stat-label">Total Titles</div>
+                </div>
                 <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>2,180</div><div className="stat-label">Available Copies</div></div>
                 <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>270</div><div className="stat-label">Currently Issued</div></div>
                 <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>12</div><div className="stat-label">Overdue Returns</div></div>
@@ -57,8 +48,10 @@ const Library = () => {
                 <div className="card">
                     <div className="card-header"><h3 className="card-title">Book Catalog</h3></div>
                     <div className="table-wrapper">
-                        {loading ? (
-                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading catalog...</div>
+                        {isLoading ? (
+                            <div style={{ padding: '2rem' }}>
+                                {[...Array(5)].map((_, i) => <div key={i} className="shimmer" style={{ height: '50px', marginBottom: '10px' }} />)}
+                            </div>
                         ) : (
                         <table>
                             <thead><tr><th>Acc. No</th><th>Title</th><th>Author</th><th>Category</th><th>Available</th><th>Shelf</th></tr></thead>
@@ -83,7 +76,7 @@ const Library = () => {
                 </div>
 
                 <div className="card">
-                    <div className="card-header"><h3 className="card-title">Recent Activity (Prototype)</h3></div>
+                    <div className="card-header"><h3 className="card-title">Recent Activity</h3></div>
                     <div className="event-item">
                         <div className="event-date-box" style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--info)', fontSize: '1rem' }}>📕</div>
                         <div className="event-info" style={{ flex: 1 }}>

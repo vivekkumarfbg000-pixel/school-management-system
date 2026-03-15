@@ -6,7 +6,7 @@
  * extended with Msg91, Fast2SMS, or Twilio.
  */
 
-const sendSMS = async (phoneNumber, message) => {
+export const sendSMS = async (phoneNumber, message) => {
   const provider = process.env.SMS_PROVIDER || 'MOCK';
   
   console.log(`[SMS ${provider}] Sending to ${phoneNumber}: "${message}"`);
@@ -28,5 +28,3 @@ const sendSMS = async (phoneNumber, message) => {
 
   return { success: false, error: 'Provider not configured' };
 };
-
-module.exports = { sendSMS };

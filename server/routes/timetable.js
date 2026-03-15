@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const supabase = require('../utils/supabaseClient');
-const { protect } = require('../middleware/auth');
+import supabase from '../utils/supabaseClient.js';
+import { protect } from '../middleware/auth.js';
 
 // GET /api/timetable
 router.get('/', protect, async (req, res) => {
@@ -21,4 +21,4 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

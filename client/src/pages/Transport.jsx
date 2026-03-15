@@ -1,28 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
 const Transport = () => {
-    const [vehicles, setVehicles] = useState([])
-    const [loading, setLoading] = useState(true)
-
-    const fetchVehicles = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get('/api/transport/vehicles', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setVehicles(data)
-        } catch (error) {
-            console.error("Error fetching vehicles", error)
-        } finally {
-            setLoading(false)
+    const { data: vehicles = [], isLoading } = useQuery({
+        queryKey: ['vehicles'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/transport/vehicles')
+            return data
         }
-    }
-
-    useEffect(() => {
-        fetchVehicles()
-    }, [])
+    })
 
     const stops = ['Charbagh (08:00)', 'Aminabad (08:10)', 'Hazratganj (08:20)', 'Gomti Nagar (08:30)', 'School (08:45)']
 
@@ -30,21 +17,35 @@ const Transport = () => {
         <div className="fade-in">
             <div className="card-header" style={{ marginBottom: '1.5rem' }}>
                 <h3 className="card-title" style={{ fontSize: '1.25rem' }}>🚌 Transport Management</h3>
-                <button className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>➕ Add Vehicle</button>
+                <button className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}>➕ Add Vehicle</button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem' }}>{vehicles.length}</div><div className="stat-label">Total Vehicles</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>107</div><div className="stat-label">Students Tracked</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>{new Set(vehicles.map(v => v.route_name)).size}</div><div className="stat-label">Active Routes</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{vehicles.filter(v => v.status === 'On Route').length}</div><div className="stat-label">Buses On Route</div></div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem' }}>{isLoading ? '...' : vehicles.length}</div>
+                    <div className="stat-label">Total Vehicles</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>107</div>
+                    <div className="stat-label">Students Tracked</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>{isLoading ? '...' : new Set(vehicles.map(v => v.route_name)).size}</div>
+                    <div className="stat-label">Active Routes</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{isLoading ? '...' : vehicles.filter(v => v.status === 'On Route').length}</div>
+                    <div className="stat-label">Buses On Route</div>
+                </div>
             </div>
 
             <div className="card" style={{ marginBottom: '1.25rem' }}>
                 <div className="card-header"><h3 className="card-title">Vehicle Tracker</h3></div>
                 <div className="table-wrapper">
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading tracking data...</div>
+                    {isLoading ? (
+                        <div style={{ padding: '2rem' }}>
+                            {[...Array(3)].map((_, i) => <div key={i} className="shimmer" style={{ height: '50px', marginBottom: '10px' }} />)}
+                        </div>
                     ) : (
                     <table>
                         <thead><tr><th>Vehicle No</th><th>Type</th><th>Driver</th><th>Route</th><th>Occupancy</th><th>Status</th></tr></thead>

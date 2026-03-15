@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
 const Timetable = () => {
-    const [view, setView] = useState('class')
     const [selectedClass, setSelectedClass] = useState('10')
     const [selectedSection, setSelectedSection] = useState('A')
-    const [timetableData, setTimetableData] = useState([])
-    const [loading, setLoading] = useState(true)
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const periods = [
@@ -22,30 +20,18 @@ const Timetable = () => {
         { num: 8, time: '02:15 - 03:00' },
     ]
 
-    const fetchTimetable = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get(`/api/timetable?className=${selectedClass}&section=${selectedSection}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setTimetableData(data)
-        } catch (error) {
-            console.error("Error fetching timetable", error)
-        } finally {
-            setLoading(false)
+    const { data: timetableData = [], isLoading } = useQuery({
+        queryKey: ['timetable', selectedClass, selectedSection],
+        queryFn: async () => {
+            const { data } = await axios.get(`/api/timetable?className=${selectedClass}&section=${selectedSection}`)
+            return data
         }
-    }
-
-    useEffect(() => {
-        fetchTimetable()
-    }, [selectedClass, selectedSection])
+    })
 
     const getSlot = (day, period) => {
         return timetableData.find(s => s.day === day && s.period === period)
     }
 
-    // Color mapping for subjects
     const colorMap = {
         'Maths': { bg: 'rgba(99,102,241,0.12)', text: '#818cf8' },
         'Science': { bg: 'rgba(16,185,129,0.12)', text: '#34d399' },
@@ -74,13 +60,14 @@ const Timetable = () => {
                             {['A','B','C'].map(s => <option key={s} value={s}>Section {s}</option>)}
                         </select>
                     </div>
-                    <button className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', padding: '0.4rem 1rem' }}>✏️ Edit Schedule</button>
                 </div>
             </div>
 
             <div className="card" style={{ overflow: 'auto' }}>
-                {loading ? (
-                    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading schedule...</div>
+                {isLoading ? (
+                    <div style={{ padding: '4rem', textAlign: 'center' }}>
+                        <div className="shimmer" style={{ height: '300px', width: '100%', borderRadius: 'var(--radius-lg)' }}></div>
+                    </div>
                 ) : (
                 <table style={{ borderCollapse: 'separate', borderSpacing: '0.5rem' }}>
                     <thead>

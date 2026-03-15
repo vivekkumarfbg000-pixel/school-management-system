@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
-const Login = ({ setAuth }) => {
+const Login = () => {
+  const { login } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +24,7 @@ const Login = ({ setAuth }) => {
 
     try {
       const { data } = await axios.post(url, payload);
-      setAuth(data.token, data.user);
+      login(data.token, data.user);
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed. Please try again.');
     } finally {

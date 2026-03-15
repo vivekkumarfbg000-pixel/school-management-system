@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Finance = () => {
-    const [financeData, setFinanceData] = useState([])
-    const [loading, setLoading] = useState(true)
-
+    const queryClient = useQueryClient()
+    
     // Modal state for collecting fee
     const [showModal, setShowModal] = useState(false)
     const [selectedStudent, setSelectedStudent] = useState(null)
     const [feeType, setFeeType] = useState('Tuition')
     const [amount, setAmount] = useState('')
-    const [collecting, setCollecting] = useState(false)
 
     // Modal state for generating a test fee
     const [showGenModal, setShowGenModal] = useState(false)
@@ -18,27 +18,44 @@ const Finance = () => {
     const [genType, setGenType] = useState('Tuition')
     const [genDate, setGenDate] = useState(new Date().toISOString().split('T')[0])
 
-    const fetchFinanceData = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get('/api/fees', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setFinanceData(data)
-        } catch (error) {
-            console.error("Error fetching finance data", error)
-        } finally {
-            setLoading(false)
+    const { data: financeData = [], isLoading } = useQuery({
+        queryKey: ['fees'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/fees')
+            return data
         }
-    }
+    })
 
-    useEffect(() => {
-        fetchFinanceData()
-    }, [])
+    const collectMutation = useMutation({
+        mutationFn: async (variables) => {
+            await axios.post('/api/fees/collect', variables)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['fees'] })
+            toast.success("Payment collected successfully!")
+            setShowModal(false)
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || "Failed to collect payment")
+        }
+    })
+
+    const generateMutation = useMutation({
+        mutationFn: async (variables) => {
+            await axios.post('/api/fees/generate', variables)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['fees'] })
+            toast.success("Bill generated successfully!")
+            setShowGenModal(false)
+        },
+        onError: () => {
+            toast.error("Failed to generate bill")
+        }
+    })
 
     const handleCollectClick = (student) => {
-        if (student.balance === 0) return alert("This student has no pending dues.")
+        if (student.balance === 0) return toast.error("This student has no pending dues.")
         setSelectedStudent(student)
         setAmount(student.balance)
         setShowModal(true)
@@ -49,58 +66,30 @@ const Finance = () => {
         setShowGenModal(true)
     }
 
-    const submitPayment = async (e) => {
+    const submitPayment = (e) => {
         e.preventDefault()
-        setCollecting(true)
-        try {
-            const token = localStorage.getItem('token')
-            await axios.post('/api/fees/collect', {
-                studentId: selectedStudent.id,
-                feeType,
-                amountPaid: parseFloat(amount),
-                isFullPayment: parseFloat(amount) >= selectedStudent.balance
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            alert("Payment collected successfully!")
-            setShowModal(false)
-            fetchFinanceData()
-        } catch (error) {
-            console.error("Error collecting payment", error)
-            alert(error.response?.data?.message || "Failed to collect payment")
-        } finally {
-            setCollecting(false)
-        }
+        collectMutation.mutate({
+            studentId: selectedStudent.id,
+            feeType,
+            amountPaid: parseFloat(amount),
+            isFullPayment: parseFloat(amount) >= selectedStudent.balance
+        })
     }
 
-    const submitGenerate = async (e) => {
+    const submitGenerate = (e) => {
         e.preventDefault()
-        try {
-            const token = localStorage.getItem('token')
-            await axios.post('/api/fees/generate', {
-                studentId: selectedStudent.id,
-                amount: parseFloat(genAmount),
-                feeType: genType,
-                dueDate: genDate
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            alert("Test Fee Generated!")
-            setShowGenModal(false)
-            fetchFinanceData()
-        } catch (error) {
-            console.error(error)
-            alert("Failed to generate fee")
-        }
+        generateMutation.mutate({
+            studentId: selectedStudent.id,
+            amount: parseFloat(genAmount),
+            feeType: genType,
+            dueDate: genDate
+        })
     }
 
     // derived stats
     const totalCollected = financeData.reduce((acc, curr) => acc + curr.totalPaid, 0)
     const totalPending = financeData.reduce((acc, curr) => acc + curr.balance, 0)
     const overdueCount = financeData.filter(f => f.status === 'Overdue').length
-    
-    // Sort defaulters
-    const feeDefaulters = [...financeData].filter(f => f.balance > 0).sort((a,b) => b.balance - a.balance)
     
     const formatCurrency = (amount) => `₹${amount.toLocaleString('en-IN')}`
     const statusBadge = (s) => s === 'Paid' ? 'badge-success' : s === 'Pending' ? 'badge-warning' : s === 'Overdue' ? 'badge-danger' : s === 'RTE' ? 'badge-info' : 'badge-purple'
@@ -112,17 +101,31 @@ const Finance = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--accent)' }}>{formatCurrency(totalCollected)}</div><div className="stat-label">Total Collected</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--warning)' }}>{formatCurrency(totalPending)}</div><div className="stat-label">Pending Dues</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--danger)' }}>{overdueCount}</div><div className="stat-label">Overdue Students</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--info)' }}>{financeData.filter(s=>s.isRTE).length}</div><div className="stat-label">RTE Waivers</div></div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--accent)' }}>{isLoading ? '...' : formatCurrency(totalCollected)}</div>
+                    <div className="stat-label">Total Collected</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--warning)' }}>{isLoading ? '...' : formatCurrency(totalPending)}</div>
+                    <div className="stat-label">Pending Dues</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--danger)' }}>{isLoading ? '...' : overdueCount}</div>
+                    <div className="stat-label">Overdue Students</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--info)' }}>{isLoading ? '...' : financeData.filter(s=>s.isRTE).length}</div>
+                    <div className="stat-label">RTE Waivers</div>
+                </div>
             </div>
 
             <div className="card">
-                <div className="card-header"><h3 className="card-title">🚨 Student Fee Ledger</h3><span className="card-action">Send Reminders →</span></div>
+                <div className="card-header"><h3 className="card-title">🚨 Student Fee Ledger</h3></div>
                 <div className="table-wrapper table-responsive">
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading ledger...</div>
+                    {isLoading ? (
+                        <div style={{ padding: '2rem' }}>
+                            {[...Array(5)].map((_, i) => <div key={i} className="shimmer" style={{ height: '40px', marginBottom: '10px' }} />)}
+                        </div>
                     ) : (
                     <table>
                         <thead><tr><th>Student</th><th>Class</th><th>Total Billed</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
@@ -141,18 +144,12 @@ const Finance = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {financeData.length === 0 && (
-                                <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No records found.</td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                     )}
                 </div>
             </div>
 
-            {/* QUICK MODAL STYLES INLINE FOR SIMPLICITY */}
             {showModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
                     <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
@@ -172,14 +169,13 @@ const Finance = () => {
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={collecting} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{collecting ? 'Processing...' : 'Confirm Payment'}</button>
+                                <button type="submit" disabled={collectMutation.isPending} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{collectMutation.isPending ? '...' : 'Confirm Payment'}</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* GENERATE FEE MODAL */}
             {showGenModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
                     <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
@@ -203,7 +199,7 @@ const Finance = () => {
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setShowGenModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Create Bill</button>
+                                <button type="submit" disabled={generateMutation.isPending} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{generateMutation.isPending ? '...' : 'Create Bill'}</button>
                             </div>
                         </form>
                     </div>

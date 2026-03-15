@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Communication = () => {
+    const queryClient = useQueryClient()
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         target: 'all',
@@ -9,7 +12,6 @@ const Communication = () => {
         section: '',
         message: ''
     })
-    const [submitting, setSubmitting] = useState(false)
 
     const notices = [
         { date: '10 Mar', title: 'Annual Sports Day — All Students Participate', priority: 'High', audience: 'All Classes', icon: '🏅' },
@@ -17,23 +19,24 @@ const Communication = () => {
         { date: '01 Mar', title: 'Holi Vacation: 28 Mar - 06 Apr (School Reopens 07 Apr)', priority: 'High', audience: 'All', icon: '🎨' },
     ]
 
-    const handleBroadcast = async (e) => {
-        e.preventDefault()
-        setSubmitting(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.post('/api/notifications/broadcast', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            alert(`✅ ${data.message}`)
+    const broadcastMutation = useMutation({
+        mutationFn: async (variables) => {
+            const { data } = await axios.post('/api/notifications/broadcast', variables)
+            return data
+        },
+        onSuccess: (data) => {
+            toast.success(data.message || "Broadcast sent successfully!")
             setShowModal(false)
             setFormData({ target: 'all', className: '', section: '', message: '' })
-        } catch (error) {
-            console.error(error)
-            alert("❌ Failed to send broadcast. Check server logs.")
-        } finally {
-            setSubmitting(false)
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || "Failed to send broadcast")
         }
+    })
+
+    const handleBroadcast = (e) => {
+        e.preventDefault()
+        broadcastMutation.mutate(formData)
     }
 
     return (
@@ -41,7 +44,7 @@ const Communication = () => {
             <div className="card-header" style={{ marginBottom: '1.5rem' }}>
                 <h3 className="card-title" style={{ fontSize: '1.25rem' }}>📢 Communication Hub</h3>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button onClick={() => setShowModal(true)} className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}>📤 Broadcast SMS</button>
+                    <button onClick={() => setShowModal(true)} className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}>📤 Broadcast SMS</button>
                     <button className="quick-action-btn" style={{ background: 'rgba(16,185,129,0.15)', borderColor: 'rgba(16,185,129,0.3)', color: 'var(--accent)' }}>📱 WhatsApp Blast</button>
                 </div>
             </div>
@@ -107,7 +110,7 @@ const Communication = () => {
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.6rem 1rem', background: 'transparent', color: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={submitting} style={{ padding: '0.6rem 1.5rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Sending...' : '🚀 Blast SMS'}</button>
+                                <button type="submit" disabled={broadcastMutation.isPending} style={{ padding: '0.6rem 1.5rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600 }}>{broadcastMutation.isPending ? 'Sending...' : '🚀 Blast SMS'}</button>
                             </div>
                         </form>
                     </div>

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Staff = () => {
-    const [staffList, setStaffList] = useState([])
-    const [loading, setLoading] = useState(true)
-    
-    // Add Staff Modal State
+    const queryClient = useQueryClient()
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         staffId: '',
@@ -18,66 +17,57 @@ const Staff = () => {
         subjects: '',
         joiningDate: new Date().toISOString().split('T')[0]
     })
-    const [submitting, setSubmitting] = useState(false)
 
-    const fetchStaff = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get('/api/staff', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setStaffList(data)
-        } catch (error) {
-            console.error("Error fetching staff", error)
-        } finally {
-            setLoading(false)
+    const { data: staffList = [], isLoading } = useQuery({
+        queryKey: ['staff'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/staff')
+            return data
         }
-    }
+    })
 
-    useEffect(() => {
-        fetchStaff()
-    }, [])
-
-    const handleAddStaff = async (e) => {
-        e.preventDefault()
-        setSubmitting(true)
-        try {
-            const token = localStorage.getItem('token')
-            await axios.post('/api/staff', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            alert("✅ Staff added successfully!")
+    const addMutation = useMutation({
+        mutationFn: async (variables) => {
+            await axios.post('/api/staff', variables)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['staff'] })
+            toast.success("Staff added successfully!")
             setShowModal(false)
             setFormData({
                 staffId: '', name: '', designation: 'Teacher', type: 'Teaching',
                 qualification: '', phone: '', basicSalary: '', subjects: '',
                 joiningDate: new Date().toISOString().split('T')[0]
             })
-            fetchStaff()
-        } catch (error) {
-            console.error(error)
-            alert("❌ Failed to add staff")
-        } finally {
-            setSubmitting(false)
+        },
+        onError: () => {
+            toast.error("Failed to add staff")
         }
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            await axios.delete(`/api/staff/${id}`)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['staff'] })
+            toast.success("Staff record deactivated")
+        },
+        onError: () => {
+            toast.error("Failed to deactivate staff")
+        }
+    })
+
+    const handleAddStaff = (e) => {
+        e.preventDefault()
+        addMutation.mutate(formData)
     }
 
-    const handleDelete = async (id) => {
+    const handleDelete = (id) => {
         if (!window.confirm("Are you sure you want to deactivate this staff record?")) return;
-        try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`/api/staff/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setStaffList(staffList.filter(s => s.id !== id));
-        } catch (error) {
-            console.error("Delete error", error);
-            alert("Failed to deactivate staff");
-        }
+        deleteMutation.mutate(id)
     }
 
-    const totalStaff = staffList.length
     const teachingCount = staffList.filter(s => s.type === 'Teaching').length
     const nonTeachingCount = staffList.filter(s => s.type === 'Non-Teaching').length
 
@@ -88,24 +78,38 @@ const Staff = () => {
                 <button 
                     onClick={() => setShowModal(true)} 
                     className="quick-action-btn" 
-                    style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}
+                    style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}
                 >
                     ➕ Add Staff
                 </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem' }}>{totalStaff}</div><div className="stat-label">Total Staff</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>{teachingCount}</div><div className="stat-label">Teaching</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>{nonTeachingCount}</div><div className="stat-label">Non-Teaching</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>0</div><div className="stat-label">On Leave Today</div></div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem' }}>{isLoading ? '...' : staffList.length}</div>
+                    <div className="stat-label">Total Staff</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>{isLoading ? '...' : teachingCount}</div>
+                    <div className="stat-label">Teaching</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>{isLoading ? '...' : nonTeachingCount}</div>
+                    <div className="stat-label">Non-Teaching</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>0</div>
+                    <div className="stat-label">On Leave Today</div>
+                </div>
             </div>
 
             <div className="card" style={{ marginBottom: '1.25rem' }}>
-                <div className="card-header"><h3 className="card-title">Staff Directory</h3><span className="card-action">Export CSV →</span></div>
+                <div className="card-header"><h3 className="card-title">Staff Directory</h3></div>
                 <div className="table-wrapper table-responsive">
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading staff...</div>
+                    {isLoading ? (
+                        <div style={{ padding: '2rem' }}>
+                            {[...Array(5)].map((_, i) => <div key={i} className="shimmer" style={{ height: '40px', marginBottom: '10px' }} />)}
+                        </div>
                     ) : (
                         <table>
                             <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Subject</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead>
@@ -119,20 +123,16 @@ const Staff = () => {
                                         <td style={{ fontWeight: 600 }}>₹{s.basic_salary?.toLocaleString()}</td>
                                         <td><span className={`badge ${s.status === 'Active' ? 'badge-success' : 'badge-warning'}`}><span className="badge-dot"></span>{s.status || 'Active'}</span></td>
                                         <td>
-                                            <button onClick={() => handleDelete(s.id)} style={{ padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>Delete</button>
+                                            <button onClick={() => handleDelete(s.id)} disabled={deleteMutation.isPending} style={{ padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', opacity: deleteMutation.isPending ? 0.5 : 1 }}>{deleteMutation.isPending ? '...' : 'Delete'}</button>
                                         </td>
                                     </tr>
                                 ))}
-                                {staffList.length === 0 && (
-                                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No members found.</td></tr>
-                                )}
                             </tbody>
                         </table>
                     )}
                 </div>
             </div>
 
-            {/* ADD STAFF MODAL */}
             {showModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
                     <div className="card fade-in" style={{ width: '500px', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -180,7 +180,7 @@ const Staff = () => {
                             
                             <div style={{ gridColumn: 'span 2', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={submitting} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Saving...' : 'Save Staff'}</button>
+                                <button type="submit" disabled={addMutation.isPending} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{addMutation.isPending ? 'Saving...' : 'Save Staff'}</button>
                             </div>
                         </form>
                     </div>

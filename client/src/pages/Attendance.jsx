@@ -1,82 +1,77 @@
 import React, { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Attendance = () => {
+    const queryClient = useQueryClient()
     const [selectedClass, setSelectedClass] = useState('10-A')
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-    const classes = ['10-A', '10-B', '12-A', '12-B', '9-C', '11-A', '8-B', '7-A', '6-B']
+    const [localStudents, setLocalStudents] = useState([])
     
-    const [students, setStudents] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [saving, setSaving] = useState(false)
+    const classes = ['10-A', '10-B', '12-A', '12-B', '9-C', '11-A', '8-B', '7-A', '6-B']
 
-    const fetchAttendance = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
+    const { data: attendanceData = [], isLoading } = useQuery({
+        queryKey: ['attendance', selectedClass, selectedDate],
+        queryFn: async () => {
             const [className, section] = selectedClass.split('-')
-            
-            const { data } = await axios.get(`/api/attendance?className=${className}&section=${section}&date=${selectedDate}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            
-            const mappedStudents = data.map(s => ({
+            const { data } = await axios.get(`/api/attendance?className=${className}&section=${section}&date=${selectedDate}`)
+            return data.map(s => ({
                 ...s,
                 status: s.status === 'Present' ? 'P' : s.status === 'Absent' ? 'A' : s.status === 'Late' ? 'L' : 'P',
                 isDirty: false
             }))
-            setStudents(mappedStudents)
-        } catch (error) {
-            console.error("Error fetching attendance", error)
-        } finally {
-            setLoading(false)
         }
-    }
+    })
 
+    // Sync local state when query data changes
     useEffect(() => {
-        fetchAttendance()
-    }, [selectedClass, selectedDate])
+        setLocalStudents(attendanceData)
+    }, [attendanceData])
 
-    const toggle = (i) => {
-        const next = [...students]
-        next[i].status = next[i].status === 'P' ? 'A' : next[i].status === 'A' ? 'L' : 'P'
-        next[i].isDirty = true
-        setStudents(next)
-    }
-
-    const saveAttendance = async () => {
-        const dirtyRecords = students.filter(s => s.isDirty)
-        if (dirtyRecords.length === 0) return alert("Nothing to save.")
-
-        setSaving(true)
-        try {
-            const token = localStorage.getItem('token')
-            const records = dirtyRecords.map(s => ({
-                studentId: s.id,
-                status: s.status === 'P' ? 'Present' : s.status === 'A' ? 'Absent' : 'Late'
-            }))
-
+    const saveMutation = useMutation({
+        mutationFn: async (records) => {
             await axios.post('/api/attendance/batch', {
                 records,
                 date: selectedDate
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             })
-
-            setStudents(students.map(s => ({ ...s, isDirty: false })))
-            alert("✅ Attendance saved successfully!")
-        } catch (error) {
-            console.error("Error saving attendance", error)
-            alert("❌ Failed to save attendance")
-        } finally {
-            setSaving(false)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['attendance'] })
+            toast.success('Attendance saved successfully')
+        },
+        onError: () => {
+            toast.error('Failed to save attendance')
         }
+    })
+
+    const toggle = (i) => {
+        const next = [...localStudents]
+        next[i].status = next[i].status === 'P' ? 'A' : next[i].status === 'A' ? 'L' : 'P'
+        next[i].isDirty = true
+        setLocalStudents(next)
     }
 
-    const counts = { P: students.filter(a => a.status === 'P').length, A: students.filter(a => a.status === 'A').length, L: students.filter(a => a.status === 'L').length }
+    const handleSave = () => {
+        const dirtyRecords = localStudents.filter(s => s.isDirty)
+        if (dirtyRecords.length === 0) return toast.error("Nothing to save.")
+
+        const records = dirtyRecords.map(s => ({
+            studentId: s.id,
+            status: s.status === 'P' ? 'Present' : s.status === 'A' ? 'Absent' : 'Late'
+        }))
+
+        saveMutation.mutate(records)
+    }
+
+    const counts = { 
+        P: localStudents.filter(a => a.status === 'P').length, 
+        A: localStudents.filter(a => a.status === 'A').length, 
+        L: localStudents.filter(a => a.status === 'L').length 
+    }
     const colors = { P: 'var(--accent)', A: 'var(--danger)', L: 'var(--warning)' }
     const labels = { P: 'Present', A: 'Absent', L: 'Late' }
-    const hasUnsavedChanges = students.some(s => s.isDirty)
+    const hasUnsavedChanges = localStudents.some(s => s.isDirty)
 
     return (
         <div className="fade-in">
@@ -91,9 +86,18 @@ const Attendance = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>{counts.P}</div><div className="stat-label">Present</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>{counts.A}</div><div className="stat-label">Absent</div></div>
-                <div className="stat-card"><div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{counts.L}</div><div className="stat-label">Late</div></div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>{isLoading ? '...' : counts.P}</div>
+                    <div className="stat-label">Present</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--danger)' }}>{isLoading ? '...' : counts.A}</div>
+                    <div className="stat-label">Absent</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{isLoading ? '...' : counts.L}</div>
+                    <div className="stat-label">Late</div>
+                </div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }} className="hide-scrollbar">
@@ -109,29 +113,31 @@ const Attendance = () => {
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h3 className="card-title">Class {selectedClass} — Tap to mark</h3>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{counts.P}/{students.length} present</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{counts.P}/{localStudents.length} present</span>
                     </div>
                     {hasUnsavedChanges && (
                         <button 
-                            onClick={saveAttendance}
-                            disabled={saving}
-                            style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--primary)', color: 'white', cursor: saving ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '0.85rem', opacity: saving ? 0.7 : 1 }}
+                            onClick={handleSave}
+                            disabled={saveMutation.isPending}
+                            style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--primary)', color: 'white', cursor: saveMutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '0.85rem', opacity: saveMutation.isPending ? 0.7 : 1 }}
                         >
-                            {saving ? '...' : '💾 Save'}
+                            {saveMutation.isPending ? '...' : '💾 Save'}
                         </button>
                     )}
                 </div>
                 
-                {loading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading students...</div>
-                ) : students.length === 0 ? (
+                {isLoading ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem', padding: '1rem' }}>
+                        {[...Array(8)].map((_, i) => <div key={i} className="shimmer" style={{ height: '110px', borderRadius: 'var(--radius-lg)' }} />)}
+                    </div>
+                ) : localStudents.length === 0 ? (
                     <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No students found for {selectedClass}.</div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem', paddingBottom: '1rem' }}>
-                        {students.map((s, i) => (
-                            <div key={i} onClick={() => toggle(i)}
+                        {localStudents.map((s, i) => (
+                            <div key={s.id || i} onClick={() => toggle(i)}
                                 style={{ padding: '0.75rem', borderRadius: 'var(--radius-lg)', border: `2px solid ${colors[s.status]}30`, background: `${colors[s.status]}08`, cursor: 'pointer', textAlign: 'center', transition: 'var(--transition)', userSelect: 'none', position: 'relative', minHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                {s.isDirty && <div style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} title="Unsaved change" />}
+                                {s.isDirty && <div style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 10px var(--primary)' }} title="Unsaved change" />}
                                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `${colors[s.status]}20`, color: colors[s.status], display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem', fontWeight: 700, fontSize: '0.9rem' }}>
                                     {s.name.charAt(0)}
                                 </div>

@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const supabase = require('../utils/supabaseClient');
-const { protect } = require('../middleware/auth');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import supabase from '../utils/supabaseClient.js';
+import { protect } from '../middleware/auth.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
@@ -123,4 +123,4 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

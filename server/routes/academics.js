@@ -1,54 +1,40 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const supabase = require('../utils/supabaseClient');
-const { protect, authorize } = require('../middleware/auth');
+import supabase from '../utils/supabaseClient.js';
+import { protect, authorize } from '../middleware/auth.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
 // GET /api/academics/exams
-router.get('/exams', protect, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('exams')
-      .select('*')
-      .order('date', { ascending: false });
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.get('/exams', protect, asyncHandler(async (req, res) => {
+  const { data, error } = await supabase
+    .from('exams')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) throw error;
+  res.json(data);
+}));
 
 // GET /api/academics/marks/:studentId
-router.get('/marks/:studentId', protect, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('exam_marks')
-      .select('*, exams(name)')
-      .eq('student_id', req.params.studentId);
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+router.get('/marks/:studentId', protect, asyncHandler(async (req, res) => {
+  const { data, error } = await supabase
+    .from('exam_marks')
+    .select('*, exams(name)')
+    .eq('student_id', req.params.studentId);
+  if (error) throw error;
+  res.json(data);
+}));
 
 // POST /api/academics/exams
-router.post('/exams', protect, authorize('ADMIN', 'PRINCIPAL'), async (req, res) => {
-  try {
-    const { name, date, className } = req.body;
-    const { data, error } = await supabase
-      .from('exams')
-      .insert([{ name, date, class_name: className }])
-      .select()
-      .single();
+router.post('/exams', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (req, res) => {
+  const { name, date, className } = req.body;
+  const { data, error } = await supabase
+    .from('exams')
+    .insert([{ name, date, class_name: className }])
+    .select()
+    .single();
 
-    if (error) throw error;
-    res.status(201).json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error creating exam' });
-  }
-});
+  if (error) throw error;
+  res.status(201).json(data);
+}));
 
-module.exports = router;
+export default router;

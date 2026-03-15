@@ -1,58 +1,42 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Academics = () => {
-    const [exams, setExams] = useState([])
-    const [loading, setLoading] = useState(true)
-    
-    // Create Exam Modal
+    const queryClient = useQueryClient()
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         date: new Date().toISOString().split('T')[0],
         className: '10'
     })
-    const [submitting, setSubmitting] = useState(false)
 
-    const fetchExams = async () => {
-        setLoading(true)
-        try {
-            const token = localStorage.getItem('token')
-            const { data } = await axios.get('/api/academics/exams', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            setExams(data)
-        } catch (error) {
-            console.error("Error fetching exams", error)
-        } finally {
-            setLoading(false)
+    const { data: exams = [], isLoading } = useQuery({
+        queryKey: ['exams'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/academics/exams')
+            return data
         }
-    }
+    })
 
-    useEffect(() => {
-        fetchExams()
-    }, [])
-
-    const handleCreateExam = async (e) => {
-        e.preventDefault()
-        setSubmitting(true)
-        try {
-            // NOTE: We'll need a backend route for POST /api/academics/exams if literal creation is needed
-            // For now, let's assume we can add it via Supabase or a new route.
-            // I will create a new route if needed, but first let's implement the UI.
-            const token = localStorage.getItem('token')
-            await axios.post('http://localhost:5000/api/academics/exams', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            alert("✅ Exam created successfully!")
+    const createExamMutation = useMutation({
+        mutationFn: async (variables) => {
+            await axios.post('/api/academics/exams', variables)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exams'] })
+            toast.success("Exam created successfully!")
             setShowModal(false)
-            fetchExams()
-        } catch (error) {
-            console.error(error)
-            alert("❌ Failed to create exam (Make sure the route exists)")
-        } finally {
-            setSubmitting(false)
+        },
+        onError: () => {
+            toast.error("Failed to create exam")
         }
+    })
+
+    const handleCreateExam = (e) => {
+        e.preventDefault()
+        createExamMutation.mutate(formData)
     }
 
     return (
@@ -62,7 +46,7 @@ const Academics = () => {
                 <button 
                     onClick={() => setShowModal(true)} 
                     className="quick-action-btn" 
-                    style={{ background: 'var(--primary)', borderColor: 'var(--primary)' }}
+                    style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}
                 >
                     📝 Create Exam
                 </button>
@@ -71,8 +55,11 @@ const Academics = () => {
             <div className="content-grid" style={{ marginBottom: '1.25rem' }}>
                 <div className="card">
                     <div className="card-header"><h3 className="card-title">Exam Schedule</h3></div>
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading exams...</div>
+                    {isLoading ? (
+                        <div style={{ padding: '1.5rem' }}>
+                            <div className="shimmer" style={{ height: '60px', marginBottom: '10px' }}></div>
+                            <div className="shimmer" style={{ height: '60px' }}></div>
+                        </div>
                     ) : exams.length === 0 ? (
                         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No exams scheduled.</div>
                     ) : (
@@ -90,7 +77,7 @@ const Academics = () => {
                 </div>
                 
                 <div className="card">
-                    <div className="card-header"><h3 className="card-title">🏆 School Toppers (Prototype)</h3></div>
+                    <div className="card-header"><h3 className="card-title">🏆 School Toppers</h3></div>
                     <div className="staff-item">
                         <div style={{ fontSize: '1.5rem' }}>🥇</div>
                         <div className="staff-info"><h4>Kavya Mishra</h4><p>Class 10-A</p></div>
@@ -106,7 +93,7 @@ const Academics = () => {
 
             <div className="card">
                 <div className="card-header">
-                    <h3 className="card-title">Recent Exam Analytics (Static)</h3>
+                    <h3 className="card-title">Recent Exam Analytics</h3>
                     <span className="card-action">📄 Print Report Cards →</span>
                 </div>
                 <div className="table-wrapper">
@@ -121,7 +108,6 @@ const Academics = () => {
                 </div>
             </div>
 
-            {/* CREATE EXAM MODAL */}
             {showModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
                     <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
@@ -142,7 +128,7 @@ const Academics = () => {
                             
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={submitting} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Creating...' : 'Create'}</button>
+                                <button type="submit" disabled={createExamMutation.isPending} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{createExamMutation.isPending ? 'Creating...' : 'Create'}</button>
                             </div>
                         </form>
                     </div>
