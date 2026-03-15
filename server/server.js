@@ -17,6 +17,7 @@ import transportRoutes from './routes/transport.js';
 import libraryRoutes from './routes/library.js';
 import notificationRoutes from './routes/notifications.js';
 import dashboardRoutes from './routes/dashboard.js';
+import aiRoutes from './routes/ai.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/transport', transportRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -18,6 +18,14 @@ const Dashboard = () => {
     }
   })
 
+  const { data: aiInsights, isLoading: isInsightsLoading } = useQuery({
+    queryKey: ['aiInsights'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/ai/insights')
+      return data
+    }
+  })
+
   const dynamicStats = [
     { label: 'Total Students', value: dashData?.stats.totalStudents || '0', icon: '🎓', theme: 'purple' },
     { label: 'Attendance Today', value: (dashData?.stats.attendanceRate || '0') + '%', icon: '📊', theme: 'green' },
@@ -85,12 +93,22 @@ const Dashboard = () => {
         </div>
 
         <div className="card">
-          <div className="card-header"><h3 className="card-title">Quick Actions</h3></div>
-          <div className="quick-actions">
-            <button className="quick-action-btn" onClick={() => navigate('/students')}>➕ Admission</button>
-            <button className="quick-action-btn" onClick={() => navigate('/attendance')}>✅ Attendance</button>
-            <button className="quick-action-btn" onClick={() => navigate('/finance')}>💰 Collect Fee</button>
-            <button className="quick-action-btn" onClick={() => navigate('/communication')}>📢 Broadcast</button>
+          <div className="card-header">
+            <h3 className="card-title">✨ AI Insights</h3>
+          </div>
+          <div className="ai-insights-list">
+            {isInsightsLoading ? (
+              <div className="shimmer" style={{ height: '100px', width: '100%' }}></div>
+            ) : aiInsights?.insights?.map((insight, i) => (
+              <div key={i} className={`event-item fade-in-d${i+1}`}>
+                <div className={`badge badge-${insight.type}`}>
+                  <div className="badge-dot"></div>
+                </div>
+                <div className="event-info">
+                  <p style={{ color: 'var(--text-primary)', fontSize: '0.85rem' }}>{insight.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

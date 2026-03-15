@@ -1,5 +1,5 @@
-import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import AIChatBubble from '../ai/AIChatBubble';
 
 const MainLayout = ({ user, handleLogout }) => {
   const navItems = [
@@ -74,6 +74,8 @@ const MainLayout = ({ user, handleLogout }) => {
           <span>Menu</span>
         </NavLink>
       </nav>
+      
+      <AIChatBubble />
     </div>
   );
 };
