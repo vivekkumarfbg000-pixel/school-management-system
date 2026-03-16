@@ -13,8 +13,8 @@ router.post('/login', async (req, res) => {
   try {
     const { data: users, error } = await supabase
       .from('users')
-      .select('*, schools(name)')
-      .eq('email', email)
+      .select('id, username, password, role, name, school_id, schools(name)')
+      .eq('username', email)
       .limit(1);
 
     if (error || !users || users.length === 0) {
@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, schoolId: user.school_id },
+      { id: user.id, email: user.username, role: user.role, schoolId: user.school_id },
       JWT_SECRET,
       { expiresIn: '30d' }
     );
@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.username,
         name: user.name,
         role: user.role,
         school: user.schools?.name
@@ -71,19 +71,19 @@ router.post('/signup', async (req, res) => {
       .from('users')
       .insert([{
         name,
-        email,
+        username: email,
         password: hashedPassword,
         role: 'ADMIN',
         school_id: school.id
       }])
-      .select()
+      .select('id, username, password, role, name, school_id')
       .single();
 
     if (uErr) throw uErr;
 
     // 4. Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, schoolId: school.id },
+      { id: user.id, email: user.username, role: user.role, schoolId: school.id },
       JWT_SECRET,
       { expiresIn: '30d' }
     );
@@ -92,7 +92,7 @@ router.post('/signup', async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.username,
         name: user.name,
         role: user.role,
         school: school.name
@@ -116,7 +116,7 @@ router.get('/me', protect, async (req, res) => {
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
-    res.json(data);
+    res.json({ ...data, email: data.username });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
