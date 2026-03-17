@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { Wallet, TrendingUp, AlertCircle, Sparkles, Receipt, Plus, X, ArrowRight, DollarSign } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const Finance = () => {
     const queryClient = useQueryClient()
@@ -32,11 +34,11 @@ const Finance = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['fees'] })
-            toast.success("Payment collected successfully!")
+            toast.success("Payment internalized successfully.")
             setShowModal(false)
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || "Failed to collect payment")
+            toast.error(error.response?.data?.message || "Internal sync failure.")
         }
     })
 
@@ -46,16 +48,16 @@ const Finance = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['fees'] })
-            toast.success("Bill generated successfully!")
+            toast.success("Billing record generated.")
             setShowGenModal(false)
         },
         onError: () => {
-            toast.error("Failed to generate bill")
+            toast.error("Ledger update failure.")
         }
     })
 
     const handleCollectClick = (student) => {
-        if (student.balance === 0) return toast.error("This student has no pending dues.")
+        if (student.balance === 0) return toast.error("Account balance is zero.")
         setSelectedStudent(student)
         setAmount(student.balance)
         setShowModal(true)
@@ -95,52 +97,97 @@ const Finance = () => {
     const statusBadge = (s) => s === 'Paid' ? 'badge-success' : s === 'Pending' ? 'badge-warning' : s === 'Overdue' ? 'badge-danger' : s === 'RTE' ? 'badge-info' : 'badge-purple'
 
     return (
-        <div className="fade-in" style={{ position: 'relative' }}>
-            <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
-                <h3 className="card-title" style={{ fontSize: '1.25rem' }}>💰 Fee & Finance Hub</h3>
+        <div className="page-workspace">
+            <div className="page-header">
+                <div className="header-text">
+                    <h1>Revenue command</h1>
+                    <p>Global financial health and student fee reconciliation ledger.</p>
+                </div>
+                <div className="header-actions">
+                    <button className="btn-glass">
+                        <TrendingUp size={16} />
+                        <span>Financial Report</span>
+                    </button>
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--accent)' }}>{isLoading ? '...' : formatCurrency(totalCollected)}</div>
-                    <div className="stat-label">Total Collected</div>
+                    <div className="stat-icon green"><Wallet size={20} /></div>
+                    <div className="stat-value text-success">{isLoading ? '...' : formatCurrency(totalCollected)}</div>
+                    <div className="stat-label">Total Realized</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--warning)' }}>{isLoading ? '...' : formatCurrency(totalPending)}</div>
-                    <div className="stat-label">Pending Dues</div>
+                    <div className="stat-icon amber"><TrendingUp size={20} /></div>
+                    <div className="stat-value text-warning">{isLoading ? '...' : formatCurrency(totalPending)}</div>
+                    <div className="stat-label">Projected Receivables</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--danger)' }}>{isLoading ? '...' : overdueCount}</div>
-                    <div className="stat-label">Overdue Students</div>
+                    <div className="stat-icon red"><AlertCircle size={20} /></div>
+                    <div className="stat-value text-danger">{isLoading ? '...' : overdueCount}</div>
+                    <div className="stat-label">Delinquent Accounts</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--info)' }}>{isLoading ? '...' : financeData.filter(s=>s.isRTE).length}</div>
-                    <div className="stat-label">RTE Waivers</div>
+                    <div className="stat-icon blue"><Sparkles size={20} /></div>
+                    <div className="stat-value info">{isLoading ? '...' : financeData.filter(s=>s.isRTE).length}</div>
+                    <div className="stat-label">RTE Social Credits</div>
                 </div>
             </div>
 
             <div className="card">
-                <div className="card-header"><h3 className="card-title">🚨 Student Fee Ledger</h3></div>
-                <div className="table-wrapper table-responsive">
+                <div className="card-header">
+                    <h3 className="card-title"><Receipt size={16} /> Student Fee Registry</h3>
+                </div>
+                <div className="table-wrapper">
                     {isLoading ? (
-                        <div style={{ padding: '2rem' }}>
-                            {[...Array(5)].map((_, i) => <div key={i} className="shimmer" style={{ height: '40px', marginBottom: '10px' }} />)}
+                        <div className="sync-overlay">
+                            <Wallet className="animate-spin" />
+                            <span>Synchronizing Ledger...</span>
                         </div>
                     ) : (
                     <table>
-                        <thead><tr><th>Student</th><th>Class</th><th>Total Billed</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Student Identity</th>
+                                <th>Designation</th>
+                                <th>Gross Billed</th>
+                                <th>Realized</th>
+                                <th>Outstanding</th>
+                                <th>Status</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {financeData.map((s, i) => (
                                 <tr key={s.id || i}>
-                                    <td style={{ fontWeight: 600 }}>{s.name} <span style={{fontSize:'0.75rem', color:'var(--text-muted)'}}>{s.admissionNo}</span></td>
+                                    <td>
+                                        <div style={{ fontWeight: 700 }}>{s.name}</div>
+                                        <div className="text-muted font-mono" style={{ fontSize: '0.7rem' }}>{s.admissionNo}</div>
+                                    </td>
                                     <td><span className="badge badge-purple">{s.className}-{s.section}</span></td>
                                     <td>{formatCurrency(s.totalDue)}</td>
-                                    <td style={{ color: 'var(--success)', fontWeight: 600 }}>{formatCurrency(s.totalPaid)}</td>
-                                    <td style={{ fontWeight: 700, color: s.balance > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>{formatCurrency(s.balance)}</td>
+                                    <td className="text-success" style={{ fontWeight: 700 }}>{formatCurrency(s.totalPaid)}</td>
+                                    <td style={{ fontWeight: 900, color: s.balance > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>{formatCurrency(s.balance)}</td>
                                     <td><span className={`badge ${statusBadge(s.status)}`}><span className="badge-dot"></span>{s.status}</span></td>
-                                    <td style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={() => handleCollectClick(s)} disabled={s.balance === 0 && !s.isRTE} style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', border: 'none', background: 'var(--primary)', color: 'white', cursor: s.balance === 0 ? 'not-allowed' : 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Collect</button>
-                                        <button onClick={() => handleGenClick(s)} style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>+ Bill</button>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                            <button 
+                                                className="btn-glass btn-sm" 
+                                                onClick={() => handleCollectClick(s)} 
+                                                disabled={s.balance === 0 && !s.isRTE}
+                                                style={{ color: 'var(--success)' }}
+                                            >
+                                                <DollarSign size={14} />
+                                                <span>Collect</span>
+                                            </button>
+                                            <button 
+                                                className="btn-glass btn-sm" 
+                                                onClick={() => handleGenClick(s)}
+                                            >
+                                                <Plus size={14} />
+                                                <span>Bill</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -150,61 +197,90 @@ const Finance = () => {
                 </div>
             </div>
 
-            {showModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-                    <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
-                        <div className="card-header"><h3 className="card-title">Collect Fee - {selectedStudent?.name}</h3></div>
-                        <form onSubmit={submitPayment} style={{ padding: '1rem' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Fee Type</label>
-                                <select value={feeType} onChange={e=>setFeeType(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
-                                    <option value="Tuition">Tuition</option>
-                                    <option value="Transport">Transport</option>
-                                    <option value="Annual">Annual/Lab</option>
-                                </select>
+            <AnimatePresence>
+                {showModal && (
+                    <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="modal-container glass-card"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <h3 className="card-title">Process Transaction</h3>
+                                <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
                             </div>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Amount</label>
-                                <input type="number" required value={amount} onChange={e=>setAmount(e.target.value)} max={selectedStudent?.balance} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                            <div className="modal-body">
+                                <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                                    <div className="feed-icon green" style={{ width: '48px', height: '48px', margin: '0 auto 1rem' }}><DollarSign size={24} /></div>
+                                    <h4>{selectedStudent?.name}</h4>
+                                    <p className="text-muted">Balance: {formatCurrency(selectedStudent?.balance || 0)}</p>
+                                </div>
+                                <form onSubmit={submitPayment}>
+                                    <div className="form-group">
+                                        <label>Ledger Category</label>
+                                        <select className="form-control" value={feeType} onChange={e=>setFeeType(e.target.value)}>
+                                            <option value="Tuition">Tuition Fee</option>
+                                            <option value="Transport">Transport Service</option>
+                                            <option value="Annual">Annual Maintenance</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Amount to Realize</label>
+                                        <input className="form-control" type="number" required value={amount} onChange={e=>setAmount(e.target.value)} max={selectedStudent?.balance} />
+                                    </div>
+                                    <button type="submit" className="btn-primary w-full" style={{ marginTop: '1rem' }} disabled={collectMutation.isPending}>
+                                        <Save size={18} />
+                                        <span>{collectMutation.isPending ? 'Processing...' : 'Internalize Payment'}</span>
+                                    </button>
+                                </form>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={collectMutation.isPending} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{collectMutation.isPending ? '...' : 'Confirm Payment'}</button>
-                            </div>
-                        </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {showGenModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-                    <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
-                        <div className="card-header"><h3 className="card-title">Generate Bill - {selectedStudent?.name}</h3></div>
-                        <form onSubmit={submitGenerate} style={{ padding: '1rem' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Fee Type</label>
-                                <select value={genType} onChange={e=>setGenType(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
-                                    <option value="Tuition">Tuition</option>
-                                    <option value="Transport">Transport</option>
-                                    <option value="Annual">Annual/Lab</option>
-                                </select>
+                {showGenModal && (
+                    <div className="modal-overlay" onClick={() => setShowGenModal(false)}>
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="modal-container glass-card"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <h3 className="card-title">Institute Billing</h3>
+                                <button className="btn-icon" onClick={() => setShowGenModal(false)}><X size={18} /></button>
                             </div>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Amount</label>
-                                <input type="number" required value={genAmount} onChange={e=>setGenAmount(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                            <div className="modal-body">
+                                <form onSubmit={submitGenerate}>
+                                    <div className="form-group">
+                                        <label>Service Type</label>
+                                        <select className="form-control" value={genType} onChange={e=>setGenType(e.target.value)}>
+                                            <option value="Tuition">Instructional Fee</option>
+                                            <option value="Transport">Fleet Logistics</option>
+                                            <option value="Annual">Academic Ancillary</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Billing Amount</label>
+                                        <input className="form-control" type="number" required value={genAmount} onChange={e=>setGenAmount(e.target.value)} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Maturity Date (Due)</label>
+                                        <input className="form-control" type="date" required value={genDate} onChange={e=>setGenDate(e.target.value)} />
+                                    </div>
+                                    <button type="submit" className="btn-primary w-full" style={{ marginTop: '1rem' }} disabled={generateMutation.isPending}>
+                                        <Plus size={18} />
+                                        <span>{generateMutation.isPending ? 'Generating...' : 'Confirm Invoice'}</span>
+                                    </button>
+                                </form>
                             </div>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Due Date</label>
-                                <input type="date" required value={genDate} onChange={e=>setGenDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                <button type="button" onClick={() => setShowGenModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={generateMutation.isPending} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{generateMutation.isPending ? '...' : 'Create Bill'}</button>
-                            </div>
-                        </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     )
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { Users, UserPlus, Search, Trash2, ArrowRight } from 'lucide-react'
 
 const Students = () => {
     const [search, setSearch] = useState('')
@@ -42,71 +43,108 @@ const Students = () => {
     const statusBadge = (s) => s === 'Active' ? 'badge-success' : s === 'TC Issued' ? 'badge-warning' : 'badge-danger'
 
     return (
-        <div className="fade-in">
-            <div className="card-header" style={{ marginBottom: '1.5rem' }}>
-                <h3 className="card-title" style={{ fontSize: '1.25rem' }}>👥 Student Management</h3>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <input type="text" placeholder="🔍 Search by name, admission no, class..." value={search} onChange={e => setSearch(e.target.value)}
-                        style={{ padding: '0.6rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', width: '300px', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit' }} />
-                    <button className="quick-action-btn" style={{ background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}>➕ New Admission</button>
+        <div className="page-workspace">
+            <div className="page-header">
+                <div className="header-text">
+                    <h1>Student Registry</h1>
+                    <p>Manage and monitor student enrollment across all classes.</p>
+                </div>
+                <div className="header-actions">
+                    <div className="omnisearch-bar" style={{ width: '320px' }}>
+                        <Search size={18} className="text-muted" />
+                        <input 
+                            type="text" 
+                            placeholder="Search by name, adm, class..." 
+                            value={search} 
+                            onChange={e => setSearch(e.target.value)} 
+                        />
+                    </div>
+                    <button className="btn-primary">
+                        <UserPlus size={18} />
+                        <span>New Admission</span>
+                    </button>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.5rem' }}>{isLoading ? '...' : students.length}</div>
-                    <div className="stat-label">Total Students</div>
+                    <div className="stat-icon purple"><Users size={20} /></div>
+                    <div className="stat-value">{isLoading ? '...' : students.length}</div>
+                    <div className="stat-label">Total Enrollment</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--accent)' }}>{isLoading ? '...' : students.filter(s=>s.status==='Active').length}</div>
-                    <div className="stat-label">Active</div>
+                    <div className="stat-icon green"><UserPlus size={20} /></div>
+                    <div className="stat-value text-success">{isLoading ? '...' : students.filter(s=>s.status==='Active').length}</div>
+                    <div className="stat-label">Academic Active</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{isLoading ? '...' : students.filter(s=>s.status==='TC Issued').length}</div>
-                    <div className="stat-label">TC Issued</div>
+                    <div className="stat-icon amber"><Trash2 size={20} /></div>
+                    <div className="stat-value text-warning">{isLoading ? '...' : students.filter(s=>s.status==='TC Issued').length}</div>
+                    <div className="stat-label">TC Records</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>{isLoading ? '...' : students.filter(s=>s.isRTE).length}</div>
-                    <div className="stat-label">RTE Students</div>
+                    <div className="stat-icon blue"><ArrowRight size={20} /></div>
+                    <div className="stat-value info">{isLoading ? '...' : students.filter(s=>s.isRTE).length}</div>
+                    <div className="stat-label">RTE Quota</div>
                 </div>
             </div>
 
             <div className="card">
-                <div className="table-wrapper table-responsive">
+                <div className="table-wrapper">
                     {isLoading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                            <div className="shimmer" style={{ height: '40px', marginBottom: '10px' }}></div>
-                            <div className="shimmer" style={{ height: '40px', marginBottom: '10px' }}></div>
-                            <div className="shimmer" style={{ height: '40px' }}></div>
+                        <div className="sync-overlay">
+                            <Users className="animate-pulse" />
+                            <span>Synchronizing Registry...</span>
                         </div>
                     ) : (
                     <table>
                         <thead>
-                            <tr><th>Adm. No</th><th>Student Name</th><th>Father's Name</th><th>Class</th><th>Gender</th><th>Status</th><th>Actions</th></tr>
+                            <tr>
+                                <th>Adm. No</th>
+                                <th>Student Identity</th>
+                                <th>Parental Info</th>
+                                <th>Class Designation</th>
+                                <th>Gender</th>
+                                <th>Status</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {filtered.map((s, i) => (
                                 <tr key={s.id || i}>
-                                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{s.admissionNo}</td>
-                                    <td style={{ fontWeight: 600 }}>{s.name}</td>
-                                    <td style={{ color: 'var(--text-secondary)' }}>{s.fatherName}</td>
-                                    <td><span className="badge badge-purple">{s.className}-{s.section}</span></td>
-                                    <td>{s.gender === 'Male' ? '👦' : '👧'}</td>
-                                    <td><span className={`badge ${statusBadge(s.status)}`}><span className="badge-dot"></span>{s.status}</span></td>
+                                    <td className="text-muted font-mono">{s.admissionNo}</td>
                                     <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-glow)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
+                                                {s.name[0]}
+                                            </div>
+                                            <span style={{ fontWeight: 700 }}>{s.name}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style={{ fontSize: '0.8rem' }}>{s.fatherName}</div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Father</div>
+                                    </td>
+                                    <td>
+                                        <span className="badge badge-purple">{s.className}-{s.section}</span>
+                                    </td>
+                                    <td>{s.gender === 'Male' ? '👦' : '👧'} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>{s.gender}</span></td>
+                                    <td><span className={`badge ${statusBadge(s.status)}`}><span className="badge-dot"></span>{s.status}</span></td>
+                                    <td style={{ textAlign: 'right' }}>
                                         <button 
+                                            className="btn-icon danger" 
                                             onClick={() => handleDelete(s.id)} 
                                             disabled={deleteMutation.isPending}
-                                            style={{ padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', opacity: deleteMutation.isPending ? 0.5 : 1 }}
+                                            title="Remove Student"
                                         >
-                                            {deleteMutation.isPending ? '...' : 'Delete'}
+                                            <Trash2 size={16} />
                                         </button>
                                     </td>
                                 </tr>
                             ))}
                             {filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No students found.</td>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>No records matching search criteria.</td>
                                 </tr>
                             )}
                         </tbody>

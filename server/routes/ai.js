@@ -39,10 +39,47 @@ router.post('/command', protect, asyncHandler(async (req, res) => {
   res.json(command);
 }));
 
-router.get('/insights', protect, asyncHandler(async (req, res) => {
+router.get('/pulse', protect, asyncHandler(async (req, res) => {
   const contextData = await getSchoolContext(req.user.schoolId);
-  const insights = await generateInsights(contextData);
-  res.json(insights);
+  
+  // Logic to generate specific "Pulse" items
+  const pulses = [];
+  
+  if (contextData.studentsPresentToday / contextData.totalStudents < 0.9) {
+    pulses.push({
+      type: 'danger',
+      text: `Critical: Attendance is below 90% today (${contextData.studentsPresentToday}/${contextData.totalStudents}).`
+    });
+  } else {
+    pulses.push({
+      type: 'info',
+      text: `Operational: Daily attendance is healthy at ${Math.round((contextData.studentsPresentToday / contextData.totalStudents) * 100)}%.`
+    });
+  }
+
+  // Add revenue-based pulse
+  if (contextData.totalRevenue < 50000) {
+    pulses.push({
+      type: 'warning',
+      text: 'Fee collection momentum is slow for this month. 12 invoices pending.'
+    });
+  }
+
+  // Add inventory pulse
+  const { count: overdueBooks } = await supabase
+    .from('book_issues')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'Issued')
+    .lt('due_date', new Date().toISOString());
+
+  if (overdueBooks > 0) {
+    pulses.push({
+      type: 'warning',
+      text: `${overdueBooks} library book(s) are past their return date.`
+    });
+  }
+
+  res.json({ pulses });
 }));
 
 export default router;

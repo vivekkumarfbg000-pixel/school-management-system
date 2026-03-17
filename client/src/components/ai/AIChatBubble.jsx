@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Mic, MicOff, X, Send } from 'lucide-react';
+import { Bot, Mic, MicOff, X, Send, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import './AIChatBubble.css';
 
 const AIChatBubble = () => {
@@ -9,11 +10,20 @@ const AIChatBubble = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'ai', text: 'Hello! How can I help you today? You can say things like "Go to Students" or "Show me fees".' }
+    { role: 'ai', text: 'Operational. I am EduStream AI. State your command or query for immediate processing.' }
   ]);
   const navigate = useNavigate();
   const { token } = useAuth();
   const recognitionRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isListening]);
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -21,7 +31,7 @@ const AIChatBubble = () => {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-IN'; // Better for Hinglish/Indian accents
+      recognitionRef.current.lang = 'en-IN';
 
       recognitionRef.current.onresult = (event) => {
         const text = event.results[0][0].transcript;
@@ -52,6 +62,7 @@ const AIChatBubble = () => {
     if (!text.trim()) return;
 
     setMessages(prev => [...prev, { role: 'user', text }]);
+    setTranscript('');
     
     try {
       const response = await fetch('/api/ai/command', {
@@ -65,66 +76,96 @@ const AIChatBubble = () => {
       
       const data = await response.json();
       
-      setMessages(prev => [...prev, { role: 'ai', text: data.message || "I'm not sure how to help with that." }]);
+      setMessages(prev => [...prev, { role: 'ai', text: data.message || "Query resolution failed. State alternative parameters." }]);
 
       if (data.action === 'navigate' && data.target) {
         setTimeout(() => navigate(data.target), 1000);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', text: "Sorry, I'm having trouble connecting right now." }]);
+      setMessages(prev => [...prev, { role: 'ai', text: "Uplink disrupted. Check network integrity." }]);
     }
   };
 
   return (
-    <div className={`ai-assistant-container ${isOpen ? 'open' : ''}`}>
-      {!isOpen && (
-        <button className="ai-trigger" onClick={() => setIsOpen(true)}>
-          <Bot size={24} />
-          <span className="pulse-ring"></span>
-        </button>
-      )}
+    <div className="ai-assistant-container">
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.button 
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0, rotate: 45 }}
+            className="ai-trigger" 
+            onClick={() => setIsOpen(true)}
+          >
+            <Sparkles size={28} />
+            <span className="pulse-ring"></span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
-      {isOpen && (
-        <div className="ai-chat-window card">
-          <div className="ai-chat-header">
-            <div className="ai-brand">
-              <Bot size={20} className="text-primary" />
-              <span>EduStream AI</span>
-            </div>
-            <button className="close-btn" onClick={() => setIsOpen(false)}>
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="ai-messages">
-            {messages.map((msg, i) => (
-              <div key={i} className={`message ${msg.role}`}>
-                {msg.text}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 50, x: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50, x: 20 }}
+            className="ai-chat-window glass-card"
+          >
+            <div className="ai-chat-header">
+              <div className="ai-brand">
+                <div className="ai-icon-mini">
+                  <Sparkles size={14} color="black" />
+                </div>
+                <span>CYBER ASSISTANT</span>
+                <div className="status-indicator online"></div>
               </div>
-            ))}
-            {isListening && <div className="message ai typing">Listening...</div>}
-          </div>
+              <button className="btn-icon" onClick={() => setIsOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
 
-          <div className="ai-input-area">
-            <button 
-              className={`mic-btn ${isListening ? 'active' : ''}`} 
-              onClick={toggleListening}
-            >
-              {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-            </button>
-            <input 
-              type="text" 
-              placeholder="Type a command..." 
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(transcript)}
-            />
-            <button className="send-btn" onClick={() => handleSendMessage(transcript)}>
-              <Send size={18} />
-            </button>
-          </div>
-        </div>
-      )}
+            <div className="ai-messages">
+              {messages.map((msg, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, x: msg.role === 'ai' ? -10 : 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`message ${msg.role}`}
+                >
+                  {msg.text}
+                </motion.div>
+              ))}
+              {isListening && (
+                <div className="message ai typing">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="ai-input-area">
+              <button 
+                className={`mic-btn ${isListening ? 'active' : ''}`} 
+                onClick={toggleListening}
+              >
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+              <input 
+                type="text" 
+                placeholder="Synchronizing protocol..." 
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(transcript)}
+              />
+              <button className="send-btn" onClick={() => handleSendMessage(transcript)}>
+                <Send size={18} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

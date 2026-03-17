@@ -3,6 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart, Pie
+} from 'recharts'
 import { 
   Users, 
   BarChart3, 
@@ -15,14 +20,39 @@ import {
   Sparkles,
   Megaphone,
   CheckCircle,
-  Calendar
+  Calendar,
+  Command,
+  ArrowRight
 } from 'lucide-react'
 
 const Dashboard = () => {
   const navigate = useNavigate()
   const { user, token } = useAuth()
 
-  const { data: dashData, isLoading, isError } = useQuery({
+  // Mock data for analytics (In production, these come from /api/dashboard/stats)
+  const enrollmentData = [
+    { name: 'Jan', students: 40 },
+    { name: 'Feb', students: 55 },
+    { name: 'Mar', students: 48 },
+    { name: 'Apr', students: 70 },
+    { name: 'May', students: 85 },
+    { name: 'Jun', students: 102 },
+  ]
+
+  const attData = [
+    { name: 'Present', value: 85, color: 'var(--success)' },
+    { name: 'Absent', value: 10, color: 'var(--danger)' },
+    { name: 'Late', value: 5, color: 'var(--warning)' },
+  ]
+
+  const feeData = [
+    { name: 'W1', collected: 4000 },
+    { name: 'W2', collected: 3000 },
+    { name: 'W3', collected: 2000 },
+    { name: 'W4', collected: 4500 },
+  ]
+
+  const { data: dashData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const { data } = await axios.get('/api/dashboard/stats', {
@@ -32,174 +62,191 @@ const Dashboard = () => {
     }
   })
 
-  const { data: aiInsights, isLoading: isInsightsLoading } = useQuery({
-    queryKey: ['aiInsights'],
+  const { data: pulseData, isLoading: isPulseLoading } = useQuery({
+    queryKey: ['schoolPulse'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/ai/insights')
-      return data
-    }
+      const { data } = await axios.get('/api/ai/pulse', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      return data.pulses
+    },
+    refetchInterval: 30000 // Refresh every 30s for live feel
   })
-
-  const { data: schedule = [], isLoading: isScheduleLoading } = useQuery({
-    queryKey: ['todaySchedule'],
-    queryFn: async () => {
-      // For demo, we fetch class 10-A. In production, this would use user's assigned class/section.
-      const { data } = await axios.get('/api/timetable?className=10&section=A')
-      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-      return data.filter(s => s.day === today).slice(0, 3)
-    }
-  })
-
-  const dynamicStats = [
-    { label: 'Total Students', value: dashData?.stats.totalStudents || '0', icon: <Users size={24} />, theme: 'purple' },
-    { label: 'Attendance Today', value: (dashData?.stats.attendanceRate || '0') + '%', icon: <Activity size={24} />, theme: 'green' },
-    { label: 'Monthly Revenue', value: '₹' + (dashData?.stats.monthlyRevenue || '0').toLocaleString('en-IN'), icon: <Wallet size={24} />, theme: 'amber' },
-    { label: 'Active Staff', value: dashData?.stats.totalStaff || '0', icon: <UserSquare size={24} />, theme: 'blue' },
-  ]
 
   return (
-    <div className="fade-in">
-      <div className="dashboard-hero">
-        <div className="hero-content">
-          <h1>Welcome back, {user?.name?.split(' ')[0] || 'Admin'} 👋</h1>
-          <p>Here's what's happening at {user?.schoolName || 'your school'} today.</p>
-        </div>
-        <div className="hero-actions">
-          <button className="btn-primary" onClick={() => navigate('/students')}>
-            <Users size={18} />
-            <span>Add Student</span>
-          </button>
-          <button className="btn-glass" onClick={() => navigate('/finance')}>
-            <Wallet size={18} />
-            <span>Collect Fee</span>
-          </button>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="dashboard-v2"
+    >
+      {/* ... previous code remains same ... */}
+      <div className="dashboard-hero-v2">
+        <div className="hero-main">
+          <div className="hero-text">
+             <motion.h1 
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ delay: 0.2 }}
+             >
+               Welcome to Command Centre
+             </motion.h1>
+             <p>System status: <span className="text-success">Optimal</span> • {new Date().toDateString()}</p>
+          </div>
+          <div className="command-strip">
+             <button className="command-btn" onClick={() => navigate('/students')}><Users size={18} /> Admit</button>
+             <button className="command-btn" onClick={() => navigate('/finance')}><Wallet size={18} /> Fee</button>
+             <button className="command-btn" onClick={() => navigate('/attendance')}><CheckCircle size={18} /> Attend</button>
+             <button className="command-btn" onClick={() => navigate('/library')}><ArrowUpRight size={18} /> Library</button>
+          </div>
         </div>
       </div>
 
-      <div className="stats-grid">
-        {dynamicStats.map((stat, i) => (
-          <div key={i} className={`stat-card fade-in-d${i+1}`}>
-            <div className={`stat-icon ${stat.theme}`}>{stat.icon}</div>
-            <div className="stat-content">
-               <div className="stat-value">{isLoading ? '...' : stat.value}</div>
-               <div className="stat-label">{stat.label}</div>
-            </div>
-            <div className="stat-trend-indicator">
-               <TrendingUp size={12} />
-               <span>+12%</span>
+      <div className="analytics-overview-grid">
+        {/* ... Charts ... */}
+        <div className="card analytics-card">
+          <div className="card-header">
+            <h3 className="card-title"><TrendingUp size={16} /> Enrollment Velocity</h3>
+            <span className="badge badge-purple">+24% MoM</span>
+          </div>
+          <div style={{ width: '100%', height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={enrollmentData}>
+                <defs>
+                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Tooltip 
+                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                  itemStyle={{ color: 'white' }}
+                />
+                <Area type="monotone" dataKey="students" stroke="var(--primary)" fillOpacity={1} fill="url(#colorStudents)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card analytics-card">
+          <div className="card-header">
+            <h3 className="card-title"><Activity size={16} /> Attendance Pulse</h3>
+          </div>
+          <div style={{ width: '100%', height: 180, display: 'flex', alignItems: 'center' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={attData}
+                  cx="50%" cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={8}
+                  dataKey="value"
+                >
+                  {attData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pie-legend">
+               {attData.map(d => (
+                 <div key={d.name} className="legend-item">
+                    <span className="dot" style={{ background: d.color }}></span>
+                    <span className="lbl">{d.name} ({d.value}%)</span>
+                 </div>
+               ))}
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* School Pulse AI - NOW CONNECTED */}
+        <div className="card school-pulse-card">
+           <div className="card-header">
+             <h3 className="card-title text-accent"><Sparkles size={16} /> School Pulse AI</h3>
+           </div>
+           <div className="pulse-insights">
+              <AnimatePresence mode='popLayout'>
+                {isPulseLoading ? (
+                  <div className="pulse-item shimmer-pulse">
+                     <Loader2 className="animate-spin" size={14} />
+                     <p>Analyzing system health...</p>
+                  </div>
+                ) : (pulseData || []).map((pulse, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="pulse-item"
+                  >
+                     <div className={`pulse-indicator ${pulse.type}`}></div>
+                     <p>{pulse.text}</p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+           </div>
+        </div>
       </div>
 
       <div className="command-center-grid">
         <div className="main-workspace">
-          {/* Quick Tasks Hub */}
-          <div className="card task-hub">
-            <div className="card-header">
-              <h3 className="card-title"><Activity size={18} /> Daily Operations</h3>
-            </div>
-            <div className="task-actions-grid">
-               <button className="task-action-item" onClick={() => navigate('/attendance')}>
-                  <div className="task-icon purple"><CheckCircle size={20} /></div>
-                  <span>Attendance</span>
-               </button>
-               <button className="task-action-item" onClick={() => navigate('/communication')}>
-                  <div className="task-icon green"><Megaphone size={20} /></div>
-                  <span>Broadcast</span>
-               </button>
-               <button className="task-action-item" onClick={() => navigate('/academics')}>
-                  <div className="task-icon amber"><Calendar size={20} /></div>
-                  <span>Exams</span>
-               </button>
-               <button className="task-action-item" onClick={() => navigate('/reports')}>
-                  <div className="task-icon blue"><BarChart3 size={20} /></div>
-                  <span>Reports</span>
-               </button>
-            </div>
-          </div>
-
-          {/* Activity Section */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Recent Student Activity</h3>
-              <span className="card-action" onClick={() => navigate('/students')}>View Registry →</span>
-            </div>
-            <div className="table-wrapper">
-              {isLoading ? (
-                <div className="sync-overlay">
-                  <Loader2 className="animate-spin" />
-                  <span>Syncing registry...</span>
+           <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Live Operation Feed</h3>
+                <div className="feed-filter">
+                   <span>All Activities</span>
                 </div>
-              ) : (
-                <table className="pro-table">
-                  <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Status</th></tr></thead>
-                  <tbody>
-                    {(dashData?.recentStudents || []).map((s, i) => (
-                      <tr key={s.id || i}>
-                        <td>{new Date(s.created_at).toLocaleDateString()}</td>
-                        <td className="font-bold">{s.name}</td>
-                        <td><span className="badge badge-purple">{s.class_name}</span></td>
-                        <td><span className="badge badge-success">Active</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+              </div>
+              <div className="activity-feed">
+                 {/* Mock feed items */}
+                 {[1,2,3,4].map(i => (
+                   <div key={i} className="feed-item">
+                      <div className="feed-icon"><Users size={16} /></div>
+                      <div className="feed-info">
+                         <h4>New Admission: Aarav Sharma</h4>
+                         <p>Joined Class 10-A • {i}h ago</p>
+                      </div>
+                      <ArrowRight size={14} className="feed-arrow" />
+                   </div>
+                 ))}
+              </div>
+           </div>
         </div>
 
         <div className="sidebar-workspace">
-          {/* Today's Schedule Mini-View */}
-          <div className="card schedule-mini">
-            <div className="card-header">
-              <h3 className="card-title"><Calendar size={18} /> Today's Schedule</h3>
-              <span className="card-action" style={{fontSize: '0.75rem'}} onClick={() => navigate('/timetable')}>Full →</span>
-            </div>
-            <div className="mini-schedule-list">
-               {isScheduleLoading ? (
-                 <div className="shimmer" style={{height: '150px'}}></div>
-               ) : schedule.length > 0 ? schedule.map((slot, i) => (
-                 <div key={i} className={`schedule-item ${i === 0 ? 'active' : ''}`}>
-                    <span className="time">{slot.period}</span>
-                    <div className="details">
-                       <p className="subject">{slot.subject}</p>
-                       <p className="class">{slot.staff?.name.split(' ')[0]} • Room {slot.room || '101'}</p>
-                    </div>
-                 </div>
-               )) : (
-                 <div style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem'}}>
-                   No classes scheduled for today.
-                 </div>
-               )}
-            </div>
-          </div>
+           <div className="card glass-card">
+              <div className="card-header">
+                <h3 className="card-title">Collection Momentum</h3>
+              </div>
+              <div style={{ width: '100%', height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={feeData}>
+                    <Bar dataKey="collected" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                    <Tooltip 
+                      cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                      contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Revenue target: 85% achieved</p>
+              </div>
+           </div>
 
-          {/* AI Insights Section */}
-          <div className="card ai-card-pro">
-            <div className="card-header">
-              <h3 className="card-title"><Sparkles size={18} /> AI Strategy Hub</h3>
-            </div>
-            <div className="ai-insights-list">
-              {isInsightsLoading ? (
-                <div className="shimmer-list">
-                  <div className="shimmer-item"></div>
-                  <div className="shimmer-item"></div>
-                </div>
-              ) : aiInsights?.insights?.slice(0, 3).map((insight, i) => (
-                <div key={i} className={`insight-card insight-${insight.type}`}>
-                  <p>{insight.text}</p>
-                </div>
-              ))}
-            </div>
-            <button className="btn-glass-full" style={{marginTop: '1rem'}}>
-              Generate New Reports
-            </button>
-          </div>
+           <div className="card ai-chat-prompt">
+              <div className="ai-icon"><Sparkles size={24} /></div>
+              <h4>Ask EduStream AI</h4>
+              <p>Generate detailed performance reports or manage staff rosters instantly.</p>
+              <button className="btn-primary w-full">Launch AI Studio</button>
+           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

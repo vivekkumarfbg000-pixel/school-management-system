@@ -129,64 +129,71 @@ const MainLayout = ({ user, handleLogout }) => {
               />
             </div>
 
-            {showResults && searchQuery.length >= 2 && (
-              <div className="omnisearch-results glass-card">
-                {isSearching ? (
-                  <div style={{padding: '2rem', textAlign: 'center'}}><Sparkles className="animate-spin" /></div>
-                ) : (
-                  <>
-                    {results.students.length > 0 && (
-                      <div className="search-section">
-                        <div className="search-section-label">Students</div>
-                        {results.students.map(s => (
-                          <div key={s.id} className="search-result-item" onClick={() => navigate('/students')}>
-                            <div className="task-icon purple" style={{width: '32px', height: '32px'}}><Users size={16} /></div>
-                            <div className="search-result-info">
-                              <h4>{s.name}</h4>
-                              <p>{s.class_name}-{s.section} • {s.admission_no}</p>
+            <AnimatePresence>
+              {showResults && searchQuery.length >= 2 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="omnisearch-results"
+                >
+                  {isSearching ? (
+                    <div style={{padding: '2rem', textAlign: 'center'}}><Sparkles className="animate-spin" /></div>
+                  ) : (
+                    <>
+                      {results.students.length > 0 && (
+                        <div className="search-section">
+                          <div className="search-section-label">Students</div>
+                          {results.students.map(s => (
+                            <div key={s.id} className="search-result-item" onClick={() => navigate('/students')}>
+                              <div className="feed-icon" style={{width: '32px', height: '32px'}}><Users size={16} /></div>
+                              <div className="search-result-info">
+                                <h4>{s.name}</h4>
+                                <p>{s.class_name}-{s.section} • {s.admission_no}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {results.staff.length > 0 && (
-                      <div className="search-section">
-                        <div className="search-section-label">Staff</div>
-                        {results.staff.map(s => (
-                          <div key={s.id} className="search-result-item" onClick={() => navigate('/staff')}>
-                            <div className="task-icon blue" style={{width: '32px', height: '32px'}}><UserSquare size={16} /></div>
-                            <div className="search-result-info">
-                              <h4>{s.name}</h4>
-                              <p>{s.designation} • {s.staff_id}</p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {results.staff.length > 0 && (
+                        <div className="search-section">
+                          <div className="search-section-label">Staff</div>
+                          {results.staff.map(s => (
+                            <div key={s.id} className="search-result-item" onClick={() => navigate('/staff')}>
+                              <div className="feed-icon" style={{width: '32px', height: '32px'}}><UserSquare size={16} /></div>
+                              <div className="search-result-info">
+                                <h4>{s.name}</h4>
+                                <p>{s.designation} • {s.staff_id}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
 
-                    {results.books.length > 0 && (
-                      <div className="search-section">
-                        <div className="search-section-label">Library Titles</div>
-                        {results.books.map(b => (
-                          <div key={b.id} className="search-result-item" onClick={() => navigate('/library')}>
-                            <div className="task-icon amber" style={{width: '32px', height: '32px'}}><BookOpen size={16} /></div>
-                            <div className="search-result-info">
-                              <h4>{b.title}</h4>
-                              <p>{b.author} • {b.accession_no}</p>
+                      {results.books.length > 0 && (
+                        <div className="search-section">
+                          <div className="search-section-label">Library Titles</div>
+                          {results.books.map(b => (
+                            <div key={b.id} className="search-result-item" onClick={() => navigate('/library')}>
+                              <div className="feed-icon" style={{width: '32px', height: '32px'}}><BookOpen size={16} /></div>
+                              <div className="search-result-info">
+                                <h4>{b.title}</h4>
+                                <p>{b.author} • {b.accession_no}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
 
-                    {!results.students.length && !results.staff.length && !results.books.length && (
-                      <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-muted)'}}>No results found for "{searchQuery}"</div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                      {!results.students.length && !results.staff.length && !results.books.length && (
+                        <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-muted)'}}>No results found for "{searchQuery}"</div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="header-user-section">
@@ -194,17 +201,27 @@ const MainLayout = ({ user, handleLogout }) => {
               <Bell size={20} />
               <div className="bell-dot" />
             </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.4rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-full)', border: '1px solid var(--glass-border)'}}>
-               <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800}}>
+            <div className="btn-glass" style={{display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)'}}>
+               <div style={{width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 900}}>
                   {user?.name?.[0] || 'A'}
                </div>
-               <span style={{fontSize: '0.85rem', fontWeight: 600}}>{user?.name?.split(' ')[0]}</span>
+               <span style={{fontSize: '0.9rem', fontWeight: 700}}>{user?.name?.split(' ')[0]}</span>
             </div>
           </div>
         </header>
 
-        <div style={{padding: '2rem', minHeight: 'calc(100vh - 75px)'}}>
-          <Outlet />
+        <div style={{padding: '2.5rem', minHeight: 'calc(100vh - 85px)', overflowY: 'auto'}}>
+          <AnimatePresence mode="wait">
+             <motion.div
+               key={window.location.pathname}
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               exit={{ opacity: 0, x: -20 }}
+               transition={{ duration: 0.3, ease: 'easeInOut' }}
+             >
+               <Outlet />
+             </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
