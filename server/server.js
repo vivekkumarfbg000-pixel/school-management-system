@@ -4,6 +4,18 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { env } from './utils/env.js';
 
+process.on('exit', (code) => {
+  // log removed
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Routes
 import authRoutes from './routes/auth.js';
 import studentRoutes from './routes/students.js';
@@ -55,11 +67,9 @@ app.use((err, req, res, next) => {
 
 const PORT = env.PORT || 5000;
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Database: Supabase (${env.SUPABASE_URL})`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Database: Supabase (${env.SUPABASE_URL})`);
+});
 
 export default app;

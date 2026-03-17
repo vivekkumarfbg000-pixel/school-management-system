@@ -13,7 +13,7 @@ router.post('/login', async (req, res) => {
   try {
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, email, password, role, name, school_id, schools(name)')
+      .select('id, email, password, role, name, username, school_id, schools(name)')
       .eq('email', email)
       .limit(1);
 
@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.username, role: user.role, schoolId: user.school_id },
+      { id: user.id, email: user.email, username: user.username, role: user.role, schoolId: user.school_id },
       JWT_SECRET,
       { expiresIn: '30d' }
     );
@@ -72,19 +72,19 @@ router.post('/signup', async (req, res) => {
       .insert([{
         name,
         username: email,
-        email: email, // Added missing email field
+        email: email,
         password: hashedPassword,
         role: 'ADMIN',
         school_id: school.id
       }])
-      .select('id, email, password, role, name, school_id')
+      .select('id, email, username, password, role, name, school_id')
       .single();
 
     if (uErr) throw uErr;
 
     // 4. Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.username, role: user.role, schoolId: school.id },
+      { id: user.id, email: user.email, username: user.username, role: user.role, schoolId: school.id },
       JWT_SECRET,
       { expiresIn: '30d' }
     );
