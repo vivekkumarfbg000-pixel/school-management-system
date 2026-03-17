@@ -40,6 +40,16 @@ const Dashboard = () => {
     }
   })
 
+  const { data: schedule = [], isLoading: isScheduleLoading } = useQuery({
+    queryKey: ['todaySchedule'],
+    queryFn: async () => {
+      // For demo, we fetch class 10-A. In production, this would use user's assigned class/section.
+      const { data } = await axios.get('/api/timetable?className=10&section=A')
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+      return data.filter(s => s.day === today).slice(0, 3)
+    }
+  })
+
   const dynamicStats = [
     { label: 'Total Students', value: dashData?.stats.totalStudents || '0', icon: <Users size={24} />, theme: 'purple' },
     { label: 'Attendance Today', value: (dashData?.stats.attendanceRate || '0') + '%', icon: <Activity size={24} />, theme: 'green' },
@@ -55,11 +65,11 @@ const Dashboard = () => {
           <p>Here's what's happening at {user?.schoolName || 'your school'} today.</p>
         </div>
         <div className="hero-actions">
-          <button className="btn-primary" onClick={() => navigate('/students?add=true')}>
+          <button className="btn-primary" onClick={() => navigate('/students')}>
             <Users size={18} />
             <span>Add Student</span>
           </button>
-          <button className="btn-glass" onClick={() => navigate('/finance?collect=true')}>
+          <button className="btn-glass" onClick={() => navigate('/finance')}>
             <Wallet size={18} />
             <span>Collect Fee</span>
           </button>
@@ -90,19 +100,19 @@ const Dashboard = () => {
               <h3 className="card-title"><Activity size={18} /> Daily Operations</h3>
             </div>
             <div className="task-actions-grid">
-               <button className="task-action-item">
+               <button className="task-action-item" onClick={() => navigate('/attendance')}>
                   <div className="task-icon purple"><CheckCircle size={20} /></div>
                   <span>Attendance</span>
                </button>
-               <button className="task-action-item">
+               <button className="task-action-item" onClick={() => navigate('/communication')}>
                   <div className="task-icon green"><Megaphone size={20} /></div>
                   <span>Broadcast</span>
                </button>
-               <button className="task-action-item">
+               <button className="task-action-item" onClick={() => navigate('/academics')}>
                   <div className="task-icon amber"><Calendar size={20} /></div>
                   <span>Exams</span>
                </button>
-               <button className="task-action-item">
+               <button className="task-action-item" onClick={() => navigate('/reports')}>
                   <div className="task-icon blue"><BarChart3 size={20} /></div>
                   <span>Reports</span>
                </button>
@@ -145,29 +155,24 @@ const Dashboard = () => {
           <div className="card schedule-mini">
             <div className="card-header">
               <h3 className="card-title"><Calendar size={18} /> Today's Schedule</h3>
+              <span className="card-action" style={{fontSize: '0.75rem'}} onClick={() => navigate('/timetable')}>Full →</span>
             </div>
             <div className="mini-schedule-list">
-               <div className="schedule-item active">
-                  <span className="time">09:00 AM</span>
-                  <div className="details">
-                     <p className="subject">Mathematics</p>
-                     <p className="class">Class 10-A</p>
-                  </div>
-               </div>
-               <div className="schedule-item">
-                  <span className="time">11:00 AM</span>
-                  <div className="details">
-                     <p className="subject">Physics Lab</p>
-                     <p className="class">Class 12-B</p>
-                  </div>
-               </div>
-               <div className="schedule-item">
-                  <span className="time">01:30 PM</span>
-                  <div className="details">
-                     <p className="subject">Staff Meeting</p>
-                     <p className="class">Conference Hall</p>
-                  </div>
-               </div>
+               {isScheduleLoading ? (
+                 <div className="shimmer" style={{height: '150px'}}></div>
+               ) : schedule.length > 0 ? schedule.map((slot, i) => (
+                 <div key={i} className={`schedule-item ${i === 0 ? 'active' : ''}`}>
+                    <span className="time">{slot.period}</span>
+                    <div className="details">
+                       <p className="subject">{slot.subject}</p>
+                       <p className="class">{slot.staff?.name.split(' ')[0]} • Room {slot.room || '101'}</p>
+                    </div>
+                 </div>
+               )) : (
+                 <div style={{padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem'}}>
+                   No classes scheduled for today.
+                 </div>
+               )}
             </div>
           </div>
 

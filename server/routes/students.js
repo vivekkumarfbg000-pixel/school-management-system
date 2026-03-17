@@ -36,7 +36,29 @@ router.post('/', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (r
     address,
     school_id: req.user.schoolId
   }]).select().single();
+  
   if (error) throw error;
+
+  // --- SMART INTERCONNECTION: Initialize Fee Ledger ---
+  // 1. Fetch Fee Structure for this class
+  const { data: structures } = await supabase
+    .from('fee_structures')
+    .select('*')
+    .eq('class_name', className)
+    .eq('school_id', req.user.schoolId);
+
+  if (structures && structures.length > 0) {
+    const feeRecords = structures.map(fs => ({
+      student_id: data.id,
+      amount: fs.amount,
+      fee_type: fs.fee_type,
+      status: 'Pending',
+      due_date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10).toISOString(), // Due 10th of next month
+    }));
+
+    await supabase.from('fees').insert(feeRecords);
+  }
+
   res.status(201).json(data);
 }));
 
