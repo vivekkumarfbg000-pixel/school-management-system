@@ -3,6 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { 
+  Users, 
+  BarChart3, 
+  Wallet, 
+  UserSquare,
+  ArrowUpRight,
+  TrendingUp,
+  Activity
+} from 'lucide-react'
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -27,10 +36,10 @@ const Dashboard = () => {
   })
 
   const dynamicStats = [
-    { label: 'Total Students', value: dashData?.stats.totalStudents || '0', icon: '🎓', theme: 'purple' },
-    { label: 'Attendance Today', value: (dashData?.stats.attendanceRate || '0') + '%', icon: '📊', theme: 'green' },
-    { label: 'Monthly Revenue', value: '₹' + (dashData?.stats.monthlyRevenue || '0').toLocaleString('en-IN'), icon: '💰', theme: 'amber' },
-    { label: 'Active Staff', value: dashData?.stats.totalStaff || '0', icon: '👨‍🏫', theme: 'blue' },
+    { label: 'Total Students', value: dashData?.stats.totalStudents || '0', icon: <Users size={24} />, theme: 'purple' },
+    { label: 'Attendance Today', value: (dashData?.stats.attendanceRate || '0') + '%', icon: <Activity size={24} />, theme: 'green' },
+    { label: 'Monthly Revenue', value: '₹' + (dashData?.stats.monthlyRevenue || '0').toLocaleString('en-IN'), icon: <Wallet size={24} />, theme: 'amber' },
+    { label: 'Active Staff', value: dashData?.stats.totalStaff || '0', icon: <UserSquare size={24} />, theme: 'blue' },
   ]
 
   return (
@@ -53,12 +62,14 @@ const Dashboard = () => {
 
       <div className="stats-grid">
         {dynamicStats.map((stat, i) => (
-          <div key={i} className="stat-card fade-in-d1">
-            <div className="stat-header">
-              <div className={`stat-icon ${stat.theme}`}>{stat.icon}</div>
-            </div>
+          <div key={i} className={`stat-card fade-in-d${i+1}`}>
+            <div className={`stat-icon ${stat.theme}`}>{stat.icon}</div>
             <div className="stat-value">{isLoading ? '...' : stat.value}</div>
             <div className="stat-label">{stat.label}</div>
+            <div className="stat-trend-indicator">
+               <TrendingUp size={12} />
+               <span>+12% this month</span>
+            </div>
           </div>
         ))}
       </div>
