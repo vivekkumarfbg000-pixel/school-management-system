@@ -233,3 +233,14 @@ CREATE TABLE IF NOT EXISTS book_issues (
   student_id TEXT NOT NULL REFERENCES students(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- 18. Notices
+CREATE TABLE IF NOT EXISTS notices (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  priority TEXT DEFAULT 'Medium',
+  audience TEXT DEFAULT 'All',
+  icon TEXT,
+  school_id TEXT NOT NULL REFERENCES schools(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

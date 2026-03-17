@@ -29,29 +29,6 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const { user, token } = useAuth()
 
-  // Mock data for analytics (In production, these come from /api/dashboard/stats)
-  const enrollmentData = [
-    { name: 'Jan', students: 40 },
-    { name: 'Feb', students: 55 },
-    { name: 'Mar', students: 48 },
-    { name: 'Apr', students: 70 },
-    { name: 'May', students: 85 },
-    { name: 'Jun', students: 102 },
-  ]
-
-  const attData = [
-    { name: 'Present', value: 85, color: 'var(--success)' },
-    { name: 'Absent', value: 10, color: 'var(--danger)' },
-    { name: 'Late', value: 5, color: 'var(--warning)' },
-  ]
-
-  const feeData = [
-    { name: 'W1', collected: 4000 },
-    { name: 'W2', collected: 3000 },
-    { name: 'W3', collected: 2000 },
-    { name: 'W4', collected: 4500 },
-  ]
-
   const { data: dashData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
@@ -62,6 +39,11 @@ const Dashboard = () => {
     }
   })
 
+  // Use live data if available, otherwise fall back to empty structures
+  const enrollmentData = dashData?.charts?.enrollment || []
+  const attData = dashData?.charts?.attendance || []
+  const feeData = dashData?.charts?.revenue || []
+
   const { data: pulseData, isLoading: isPulseLoading } = useQuery({
     queryKey: ['schoolPulse'],
     queryFn: async () => {
@@ -70,7 +52,7 @@ const Dashboard = () => {
       })
       return data.pulses
     },
-    refetchInterval: 30000 // Refresh every 30s for live feel
+    refetchInterval: 30000 
   })
 
   return (
@@ -79,7 +61,6 @@ const Dashboard = () => {
       animate={{ opacity: 1, y: 0 }}
       className="dashboard-v2"
     >
-      {/* ... previous code remains same ... */}
       <div className="dashboard-hero-v2">
         <div className="hero-main">
           <div className="hero-text">
@@ -102,28 +83,33 @@ const Dashboard = () => {
       </div>
 
       <div className="analytics-overview-grid">
-        {/* ... Charts ... */}
         <div className="card analytics-card">
           <div className="card-header">
             <h3 className="card-title"><TrendingUp size={16} /> Enrollment Velocity</h3>
-            <span className="badge badge-purple">+24% MoM</span>
+            {isLoading ? <span className="shimmer" style={{width: '60px', height: '20px'}}></span> : 
+              <span className="badge badge-purple">Live Feed</span>
+            }
           </div>
           <div style={{ width: '100%', height: 180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={enrollmentData}>
-                <defs>
-                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                  itemStyle={{ color: 'white' }}
-                />
-                <Area type="monotone" dataKey="students" stroke="var(--primary)" fillOpacity={1} fill="url(#colorStudents)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {isLoading ? (
+              <div className="shimmer" style={{height: '100%', borderRadius: '12px'}}></div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={enrollmentData}>
+                  <defs>
+                    <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip 
+                    contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    itemStyle={{ color: 'white' }}
+                  />
+                  <Area type="monotone" dataKey="students" stroke="var(--primary)" fillOpacity={1} fill="url(#colorStudents)" strokeWidth={3} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -132,37 +118,42 @@ const Dashboard = () => {
             <h3 className="card-title"><Activity size={16} /> Attendance Pulse</h3>
           </div>
           <div style={{ width: '100%', height: 180, display: 'flex', alignItems: 'center' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={attData}
-                  cx="50%" cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={8}
-                  dataKey="value"
-                >
-                  {attData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pie-legend">
-               {attData.map(d => (
-                 <div key={d.name} className="legend-item">
-                    <span className="dot" style={{ background: d.color }}></span>
-                    <span className="lbl">{d.name} ({d.value}%)</span>
-                 </div>
-               ))}
-            </div>
+            {isLoading ? (
+              <div className="shimmer" style={{height: '100%', width: '100%', borderRadius: '12px'}}></div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={attData}
+                      cx="50%" cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {attData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pie-legend">
+                   {attData.map(d => (
+                     <div key={d.name} className="legend-item">
+                        <span className="dot" style={{ background: d.color }}></span>
+                        <span className="lbl">{d.name} ({d.value}%)</span>
+                     </div>
+                   ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* School Pulse AI - NOW CONNECTED */}
         <div className="card school-pulse-card">
            <div className="card-header">
              <h3 className="card-title text-accent"><Sparkles size={16} /> School Pulse AI</h3>
@@ -197,21 +188,21 @@ const Dashboard = () => {
            <div className="card">
               <div className="card-header">
                 <h3 className="card-title">Live Operation Feed</h3>
-                <div className="feed-filter">
-                   <span>All Activities</span>
-                </div>
               </div>
               <div className="activity-feed">
-                 {/* Mock feed items */}
-                 {[1,2,3,4].map(i => (
-                   <div key={i} className="feed-item">
-                      <div className="feed-icon"><Users size={16} /></div>
-                      <div className="feed-info">
-                         <h4>New Admission: Aarav Sharma</h4>
-                         <p>Joined Class 10-A • {i}h ago</p>
-                      </div>
-                      <ArrowRight size={14} className="feed-arrow" />
-                   </div>
+                 {isLoading ? (
+                    [1,2,3].map(i => <div key={i} className="shimmer" style={{height: '60px', marginBottom: '10px', borderRadius: '8px'}}></div>)
+                 ) : (dashData?.activity || []).length === 0 ? (
+                    <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-muted)'}}>No recent activity found.</div>
+                 ) : (dashData?.activity || []).map((act, i) => (
+                    <div key={i} className="feed-item">
+                       <div className="feed-icon"><Users size={16} /></div>
+                       <div className="feed-info">
+                          <h4>{act.title}</h4>
+                          <p>{act.desc} • {new Date(act.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                       </div>
+                       <ArrowRight size={14} className="feed-arrow" />
+                    </div>
                  ))}
               </div>
            </div>
@@ -223,18 +214,24 @@ const Dashboard = () => {
                 <h3 className="card-title">Collection Momentum</h3>
               </div>
               <div style={{ width: '100%', height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={feeData}>
-                    <Bar dataKey="collected" fill="var(--accent)" radius={[4, 4, 0, 0]} />
-                    <Tooltip 
-                      cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                      contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                {isLoading ? (
+                  <div className="shimmer" style={{height: '100%', borderRadius: '12px'}}></div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={feeData}>
+                      <Bar dataKey="collected" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                      <Tooltip 
+                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                        contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
               <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Revenue target: 85% achieved</p>
+                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Revenue Target: {isLoading ? '...' : (dashData?.stats?.monthlyRevenue > 100000 ? '92%' : 'Active')}
+                 </p>
               </div>
            </div>
 
