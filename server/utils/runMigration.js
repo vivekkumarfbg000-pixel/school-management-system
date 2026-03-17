@@ -1,19 +1,21 @@
-// Runs the complete SQL schema against Supabase using direct PG connection
-// Usage: node utils/runMigration.js
+import dotenv from 'dotenv';
+import pg from 'pg';
+const { Pool } = pg;
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-require('dotenv').config();
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Supabase allows direct PG connections via the Session pooler on port 5432
-// The password in this case is the SERVICE ROLE JWT key
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 const pool = new Pool({
   connectionString: `postgresql://postgres.rfdmnjshizseimkwselc:${process.env.SUPABASE_SERVICE_KEY}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`,
   ssl: { rejectUnauthorized: false }
 });
 
-const sql = fs.readFileSync(path.join(__dirname, '../prisma/supabase_schema.sql'), 'utf8');
+const sql = fs.readFileSync(path.join(__dirname, '../prisma/supabase_schema_fixed.sql'), 'utf8');
 
 async function run() {
   const client = await pool.connect();
