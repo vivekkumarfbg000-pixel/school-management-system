@@ -13,8 +13,8 @@ router.post('/login', async (req, res) => {
   try {
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, username, password, role, name, school_id, schools(name)')
-      .eq('username', email)
+      .select('id, email, password, role, name, school_id, schools(name)')
+      .eq('email', email)
       .limit(1);
 
     if (error || !users || users.length === 0) {
@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.username,
+        email: user.email,
         name: user.name,
         role: user.role,
         school: user.schools?.name
@@ -72,11 +72,12 @@ router.post('/signup', async (req, res) => {
       .insert([{
         name,
         username: email,
+        email: email, // Added missing email field
         password: hashedPassword,
         role: 'ADMIN',
         school_id: school.id
       }])
-      .select('id, username, password, role, name, school_id')
+      .select('id, email, password, role, name, school_id')
       .single();
 
     if (uErr) throw uErr;
@@ -92,7 +93,7 @@ router.post('/signup', async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.username,
+        email: user.email,
         name: user.name,
         role: user.role,
         school: school.name
@@ -112,11 +113,11 @@ router.get('/me', protect, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, name, role, school_id')
+      .select('id, email, name, role, school_id')
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
-    res.json({ ...data, email: data.username });
+    res.json(data);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

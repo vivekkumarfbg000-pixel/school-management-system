@@ -27,32 +27,32 @@ model School {
 model AcademicSession {
   id        String   @id @default(cuid())
   name      String   // "2025-26"
-  startDate DateTime
-  endDate   DateTime
+  start_date DateTime
+  end_date   DateTime
   isActive  Boolean  @default(true)
-  schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id])
+  school_id  String
+  school    School   @relation(fields: [school_id], references: [id])
 }
 
 model Student {
   id            String   @id @default(cuid())
-  admissionNo   String   @unique
+  admission_no   String   @unique
   name          String
-  fatherName    String
-  motherName    String
-  className     String
+  father_name    String
+  mother_name    String
+  class_name     String
   section       String
   dob           DateTime
   gender        String
   aadhaar       String?
   category      String   // General, OBC, SC, ST
-  isRTE         Boolean  @default(false)
+  is_rte         Boolean  @default(false)
   phone         String
   address       String
-  photoUrl      String?
+  photo_url      String?
   status        String   @default("Active") // Active, TC Issued, Dropped
-  schoolId      String
-  school        School   @relation(fields: [schoolId], references: [id])
+  school_id      String
+  school        School   @relation(fields: [school_id], references: [id])
   attendance    Attendance[]
   fees          Fee[]
   marks         ExamMark[]
@@ -63,33 +63,33 @@ model Attendance {
   id        String   @id @default(cuid())
   date      DateTime
   status    String   // Present, Absent, Late, Holiday
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
-  markedBy  String   // Teacher userId
-  @@unique([studentId, date])
+  student_id String
+  student   Student  @relation(fields: [student_id], references: [id])
+  marked_by  String   // Teacher userId
+  @@unique([student_id, date])
 }
 
 model FeeStructure {
   id        String  @id @default(cuid())
-  className String
-  feeType   String  // Tuition, Transport, Lab, Annual
+  class_name String
+  fee_type   String  // Tuition, Transport, Lab, Annual
   amount    Float
   cycle     String  // Monthly, Quarterly, Annual
-  schoolId  String
+  school_id  String
 }
 
 model Fee {
   id          String   @id @default(cuid())
   amount      Float
-  paidAmount  Float    @default(0)
-  lateFee     Float    @default(0)
+  paid_amount  Float    @default(0)
+  late_fee     Float    @default(0)
   status      String   // Paid, Partial, Pending, Overdue
-  dueDate     DateTime
-  paidDate    DateTime?
-  feeType     String
-  receiptNo   String?
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
+  due_date     DateTime
+  paid_date    DateTime?
+  fee_type     String
+  receipt_no   String?
+  student_id   String
+  student     Student  @relation(fields: [student_id], references: [id])
   createdAt   DateTime @default(now())
 }
 
@@ -97,42 +97,42 @@ model Exam {
   id        String     @id @default(cuid())
   name      String     // "Unit Test 1", "Half Yearly"
   date      DateTime
-  className String
+  class_name String
   marks     ExamMark[]
 }
 
 model ExamMark {
   id         String  @id @default(cuid())
   subject    String
-  maxMarks   Float
+  max_marks   Float
   obtained   Float
   grade      String?
-  studentId  String
-  student    Student @relation(fields: [studentId], references: [id])
-  examId     String
-  exam       Exam    @relation(fields: [examId], references: [id])
+  student_id  String
+  student    Student @relation(fields: [student_id], references: [id])
+  exam_id     String
+  exam       Exam    @relation(fields: [exam_id], references: [id])
 }
 
 model Staff {
   id            String   @id @default(cuid())
-  staffId       String   @unique
+  staff_id       String   @unique
   name          String
   designation   String   // Principal, Teacher, Clerk, Peon, Driver
   type          String   // Teaching, Non-Teaching
   qualification String
   aadhaar       String?
   phone         String
-  photoUrl      String?
-  basicSalary   Float
+  photo_url      String?
+  basic_salary   Float
   da            Float    @default(0)  // Dearness Allowance
   hra           Float    @default(0)  // House Rent Allowance
   allowances    Float    @default(0)
   pfDeduction   Float    @default(0)
   tdsDeduction  Float    @default(0)
-  joiningDate   DateTime
+  joining_date   DateTime
   subjects      String?  // Comma-separated: "Maths, Science"
-  schoolId      String
-  school        School   @relation(fields: [schoolId], references: [id])
+  school_id      String
+  school        School   @relation(fields: [school_id], references: [id])
   leaves        Leave[]
   salarySlips   SalarySlip[]
   attendance    StaffAttendance[]
@@ -142,38 +142,38 @@ model Staff {
 model StaffAttendance {
   id        String   @id @default(cuid())
   date      DateTime
-  checkIn   DateTime?
-  checkOut  DateTime?
+  check_in   DateTime?
+  check_out  DateTime?
   status    String   // Present, Absent, Half-Day, On-Leave
-  staffId   String
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  @@unique([staffId, date])
+  staff_id   String
+  staff     Staff    @relation(fields: [staff_id], references: [id])
+  @@unique([staff_id, date])
 }
 
 model Leave {
   id        String   @id @default(cuid())
   type      String   // CL, EL, Medical, Maternity, Duty
-  fromDate  DateTime
-  toDate    DateTime
+  from_date  DateTime
+  to_date    DateTime
   days      Int
   reason    String?
   status    String   // Pending, Approved, Rejected
-  staffId   String
-  staff     Staff    @relation(fields: [staffId], references: [id])
+  staff_id   String
+  staff     Staff    @relation(fields: [staff_id], references: [id])
 }
 
 model SalarySlip {
   id            String   @id @default(cuid())
   month         String   // "March 2026"
-  grossSalary   Float
-  totalDeductions Float
-  netSalary     Float
-  absentDays    Int      @default(0)
-  absentDeduction Float  @default(0)
+  gross_salary   Float
+  total_deductions Float
+  net_salary     Float
+  absent_days    Int      @default(0)
+  absent_deduction Float  @default(0)
   status        String   // Generated, Paid, Delayed
-  paidDate      DateTime?
-  staffId       String
-  staff         Staff    @relation(fields: [staffId], references: [id])
+  paid_date      DateTime?
+  staff_id       String
+  staff         Staff    @relation(fields: [staff_id], references: [id])
   createdAt     DateTime @default(now())
 }
 
@@ -181,61 +181,61 @@ model TimetableSlot {
   id        String @id @default(cuid())
   day       String // Monday, Tuesday...
   period    Int    // 1, 2, 3...
-  startTime String // "09:00"
-  endTime   String // "09:45"
+  start_time String // "09:00"
+  end_time   String // "09:45"
   subject   String
-  className String
+  class_name String
   section   String
   room      String?
-  staffId   String
-  staff     Staff  @relation(fields: [staffId], references: [id])
+  staff_id   String
+  staff     Staff  @relation(fields: [staff_id], references: [id])
 }
 
 model Vehicle {
   id            String  @id @default(cuid())
-  vehicleNo     String  @unique
+  vehicle_no     String  @unique
   type          String  // Bus, Van
   capacity      Int
-  driverName    String
-  driverPhone   String
-  routeName     String
+  driver_name    String
+  driver_phone   String
+  route_name     String
   stops         String  // JSON array of stop names
-  schoolId      String
+  school_id      String
 }
 
 model Book {
   id          String @id @default(cuid())
-  accessionNo String @unique
+  accession_no String @unique
   title       String
   author      String
   isbn        String?
   category    String
   quantity    Int    @default(1)
   available   Int    @default(1)
-  shelfLocation String?
-  schoolId    String
+  shelf_location String?
+  school_id    String
   issues      BookIssue[]
 }
 
 model BookIssue {
   id         String    @id @default(cuid())
-  issueDate  DateTime  @default(now())
-  dueDate    DateTime
-  returnDate DateTime?
+  issue_date  DateTime  @default(now())
+  due_date    DateTime
+  return_date DateTime?
   fine       Float     @default(0)
   status     String    // Issued, Returned, Overdue
-  bookId     String
-  book       Book      @relation(fields: [bookId], references: [id])
-  studentId  String
+  book_id     String
+  book       Book      @relation(fields: [book_id], references: [id])
+  student_id  String
 }
 
 model User {
-  id       String @id @default(cuid())
-  username String? @unique
-  email    String @unique
-  password String
-  role     String // ADMIN, PRINCIPAL, TEACHER, ACCOUNTANT, LIBRARIAN, TRANSPORT
-  name     String
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id])
+  id        String @id @default(cuid())
+  username  String? @unique
+  email     String @unique
+  password  String
+  role      String // ADMIN, PRINCIPAL, TEACHER, ACCOUNTANT, LIBRARIAN, TRANSPORT
+  name      String
+  school_id String
+  school    School @relation(fields: [school_id], references: [id])
 }
