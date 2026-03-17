@@ -2,8 +2,11 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { useAuth } from '../context/AuthContext'
+import { BookOpen, Award, BarChart3, Plus, Calendar, FileText, X, Trophy } from 'lucide-react'
 
 const Academics = () => {
+    const { token } = useAuth()
     const queryClient = useQueryClient()
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
@@ -12,17 +15,41 @@ const Academics = () => {
         className: '10'
     })
 
-    const { data: exams = [], isLoading } = useQuery({
+    const { data: exams = [], isLoading: isLoadingExams } = useQuery({
         queryKey: ['exams'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/academics/exams')
+            const { data } = await axios.get('/api/academics/exams', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            return data
+        }
+    })
+
+    const { data: toppers = [], isLoading: isLoadingToppers } = useQuery({
+        queryKey: ['toppers'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/academics/toppers', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            return data
+        }
+    })
+
+    const { data: stats = [], isLoading: isLoadingStats } = useQuery({
+        queryKey: ['academic-stats'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/academics/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
             return data
         }
     })
 
     const createExamMutation = useMutation({
         mutationFn: async (variables) => {
-            await axios.post('/api/academics/exams', variables)
+            await axios.post('/api/academics/exams', variables, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['exams'] })
@@ -41,94 +68,131 @@ const Academics = () => {
 
     return (
         <div className="fade-in">
-            <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+            <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 className="card-title" style={{ fontSize: '1.25rem' }}>📚 Academics & Exams</h3>
                 <button 
                     onClick={() => setShowModal(true)} 
                     className="quick-action-btn" 
                     style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}
                 >
-                    📝 Create Exam
+                    <Plus size={16} /> Create Exam
                 </button>
             </div>
 
             <div className="content-grid" style={{ marginBottom: '1.25rem' }}>
-                <div className="card">
-                    <div className="card-header"><h3 className="card-title">Exam Schedule</h3></div>
-                    {isLoading ? (
-                        <div style={{ padding: '1.5rem' }}>
-                            <div className="shimmer" style={{ height: '60px', marginBottom: '10px' }}></div>
-                            <div className="shimmer" style={{ height: '60px' }}></div>
-                        </div>
-                    ) : exams.length === 0 ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No exams scheduled.</div>
-                    ) : (
-                        exams.map((e, i) => (
-                            <div key={e.id || i} className="event-item">
-                                <div className="event-date-box" style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--info)', fontSize: '1.2rem' }}>📝</div>
-                                <div className="event-info" style={{ flex: 1 }}>
-                                    <h4>{e.name}</h4>
-                                    <p>{new Date(e.date).toLocaleDateString()} • Class {e.class_name}</p>
+                <div className="card glass-card">
+                    <div className="card-header"><h3 className="card-title"><Calendar size={16} /> Exam Schedule</h3></div>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {isLoadingExams ? (
+                            <div className="shimmer" style={{ height: '60px', margin: '1rem' }}></div>
+                        ) : exams.length === 0 ? (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No exams scheduled.</div>
+                        ) : (
+                            exams.map((e) => (
+                                <div key={e.id} className="event-item">
+                                    <div className="event-date-box" style={{ background: 'hsla(0,0%,100%,0.05)', color: 'var(--info)', fontSize: '1.2rem' }}><FileText size={18} /></div>
+                                    <div className="event-info" style={{ flex: 1 }}>
+                                        <h4 style={{ fontWeight: 700 }}>{e.name}</h4>
+                                        <p>{new Date(e.date).toLocaleDateString()} • Class {e.class_name}</p>
+                                    </div>
+                                    <span className="badge badge-info">Scheduled</span>
                                 </div>
-                                <span className="badge badge-info">Scheduled</span>
-                            </div>
-                        ))
-                    )}
+                            ))
+                        )}
+                    </div>
                 </div>
                 
-                <div className="card">
-                    <div className="card-header"><h3 className="card-title">🏆 School Toppers</h3></div>
-                    <div className="staff-item">
-                        <div style={{ fontSize: '1.5rem' }}>🥇</div>
-                        <div className="staff-info"><h4>Kavya Mishra</h4><p>Class 10-A</p></div>
-                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary-light)' }}>96.4%</div>
-                    </div>
-                    <div className="staff-item">
-                        <div style={{ fontSize: '1.5rem' }}>🥈</div>
-                        <div className="staff-info"><h4>Aarav Sharma</h4><p>Class 10-A</p></div>
-                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary-light)' }}>94.8%</div>
+                <div className="card glass-card">
+                    <div className="card-header"><h3 className="card-title"><Trophy size={16} /> School Toppers</h3></div>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        {isLoadingToppers ? (
+                            <div className="shimmer" style={{ height: '60px', margin: '1rem' }}></div>
+                        ) : toppers.length === 0 ? (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No toppers data available yet.</div>
+                        ) : (
+                            toppers.map((t, idx) => (
+                                <div key={t.student_id} className="staff-item glass-item">
+                                    <div style={{ fontSize: '1.5rem' }}>{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                    <div className="staff-info">
+                                        <h4 style={{ fontWeight: 700 }}>{t.students?.name}</h4>
+                                        <p>Class {t.students?.class_name}-{t.students?.section}</p>
+                                    </div>
+                                    <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent)' }}>
+                                        {Math.round((t.obtained/t.max_marks)*100)}%
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="card">
+            <div className="card glass-card">
                 <div className="card-header">
-                    <h3 className="card-title">Recent Exam Analytics</h3>
-                    <span className="card-action">📄 Print Report Cards →</span>
+                    <h3 className="card-title"><BarChart3 size={16} /> Performance Analytics</h3>
+                    <span className="card-action">📄 Export Batch Report →</span>
                 </div>
                 <div className="table-wrapper">
                     <table>
-                        <thead><tr><th>Subject</th><th>Class Avg</th><th>Highest</th><th>Lowest</th><th>Pass %</th><th>Performance</th></tr></thead>
+                        <thead><tr><th>Subject</th><th>Class Avg</th><th>Pass %</th><th>Performance</th></tr></thead>
                         <tbody>
-                            <tr><td style={{ fontWeight: 600 }}>Mathematics</td><td style={{ fontWeight: 700 }}>72%</td><td>98</td><td>28</td><td><span className="badge badge-success">91%</span></td><td style={{ width: '25%' }}><div className="progress-bar" style={{ height: '8px' }}><div className="progress-fill purple" style={{ width: '72%' }}></div></div></td></tr>
-                            <tr><td style={{ fontWeight: 600 }}>Science</td><td style={{ fontWeight: 700 }}>68%</td><td>95</td><td>22</td><td><span className="badge badge-warning">85%</span></td><td style={{ width: '25%' }}><div className="progress-bar" style={{ height: '8px' }}><div className="progress-fill green" style={{ width: '68%' }}></div></div></td></tr>
-                            <tr><td style={{ fontWeight: 600 }}>English</td><td style={{ fontWeight: 700 }}>75%</td><td>96</td><td>35</td><td><span className="badge badge-success">93%</span></td><td style={{ width: '25%' }}><div className="progress-bar" style={{ height: '8px' }}><div className="progress-fill blue" style={{ width: '75%' }}></div></div></td></tr>
+                            {isLoadingStats ? (
+                                <tr><td colSpan="4"><div className="shimmer" style={{ height: '30px', margin: '0.5rem' }}></div></td></tr>
+                            ) : stats.length === 0 ? (
+                                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>No performance data collected.</td></tr>
+                            ) : (
+                                stats.map((s, i) => (
+                                    <tr key={i}>
+                                        <td style={{ fontWeight: 600 }}>{s.subject}</td>
+                                        <td style={{ fontWeight: 700 }}>{s.avg}%</td>
+                                        <td>
+                                            <span className={`badge ${s.passRate > 80 ? 'badge-success' : 'badge-warning'}`}>
+                                                {s.passRate}%
+                                            </span>
+                                        </td>
+                                        <td style={{ width: '25%' }}>
+                                            <div className="progress-bar" style={{ height: '8px' }}>
+                                                <div 
+                                                    className={`progress-fill ${s.avg > 75 ? 'green' : 'purple'}`} 
+                                                    style={{ width: `${s.avg}%` }}
+                                                ></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            {/* CREATE EXAM MODAL */}
             {showModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-                    <div className="card fade-in" style={{ width: '400px', border: '1px solid var(--border)' }}>
-                        <div className="card-header"><h3 className="card-title">📝 Create New Exam</h3></div>
-                        <form onSubmit={handleCreateExam} style={{ padding: '1rem' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Exam Name</label>
-                                <input required placeholder="Unit Test - I" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                <div className="modal-overlay">
+                    <div className="modal-card glass-card fade-in" style={{ width: '400px' }}>
+                        <div className="card-header">
+                            <h3 className="card-title">📝 Create New Exam</h3>
+                            <button className="btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+                        </div>
+                        <form onSubmit={handleCreateExam} style={{ padding: '1.5rem' }}>
+                            <div className="form-group">
+                                <label>Exam Name</label>
+                                <input className="glass-input" required placeholder="Unit Test - I" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} />
                             </div>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Date</label>
-                                <input type="date" value={formData.date} onChange={e=>setFormData({...formData, date: e.target.value})} style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                            <div className="form-group">
+                                <label>Date</label>
+                                <input type="date" className="glass-input" value={formData.date} onChange={e=>setFormData({...formData, date: e.target.value})} />
                             </div>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Class</label>
-                                <input required placeholder="10" value={formData.className} onChange={e=>setFormData({...formData, className: e.target.value})} style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                            <div className="form-group">
+                                <label>Class</label>
+                                <input required className="glass-input" placeholder="e.g. 10" value={formData.className} onChange={e=>setFormData({...formData, className: e.target.value})} />
                             </div>
                             
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
-                                <button type="submit" disabled={createExamMutation.isPending} style={{ padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-sm)', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{createExamMutation.isPending ? 'Creating...' : 'Create'}</button>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-glass w-full" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" disabled={createExamMutation.isPending} className="btn-primary w-full">
+                                    {createExamMutation.isPending ? 'Creating...' : 'Create Exam'}
+                                </button>
                             </div>
                         </form>
                     </div>

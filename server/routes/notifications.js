@@ -39,4 +39,37 @@ router.post('/broadcast', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler
   res.json({ message: `Broadcast successful. sent to ${sentCount} recipients.` });
 }));
 
+// GET /api/notifications/notices
+router.get('/notices', protect, asyncHandler(async (req, res) => {
+  const { data, error } = await supabase
+    .from('notices')
+    .select('*')
+    .eq('school_id', req.user.schoolId)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  res.json(data);
+}));
+
+// POST /api/notifications/notices
+router.post('/notices', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (req, res) => {
+  const { title, content, priority, audience, icon } = req.body;
+  
+  const { data, error } = await supabase
+    .from('notices')
+    .insert([{
+      title,
+      content,
+      priority: priority || 'Medium',
+      audience: audience || 'All',
+      icon: icon || '📢',
+      school_id: req.user.schoolId
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  res.status(201).json(data);
+}));
+
 export default router;

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { CheckCircle, XCircle, Clock, Save, Calendar, Filter, Users } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { CheckCircle, XCircle, Clock, Save, Calendar, Filter, Users, ChevronRight } from 'lucide-react'
 
 const Attendance = () => {
+    const { token } = useAuth()
     const queryClient = useQueryClient()
     const [selectedClass, setSelectedClass] = useState('10-A')
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -16,7 +18,9 @@ const Attendance = () => {
         queryKey: ['attendance', selectedClass, selectedDate],
         queryFn: async () => {
             const [className, section] = selectedClass.split('-')
-            const { data } = await axios.get(`/api/attendance?className=${className}&section=${section}&date=${selectedDate}`)
+            const { data } = await axios.get(`/api/attendance?className=${className}&section=${section}&date=${selectedDate}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
             return data.map(s => ({
                 ...s,
                 status: s.status === 'Present' ? 'P' : s.status === 'Absent' ? 'A' : s.status === 'Late' ? 'L' : 'P',
@@ -34,6 +38,8 @@ const Attendance = () => {
             await axios.post('/api/attendance/batch', {
                 records,
                 date: selectedDate
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             })
         },
         onSuccess: () => {
@@ -75,44 +81,48 @@ const Attendance = () => {
     const hasUnsavedChanges = localStudents.some(s => s.isDirty)
 
     return (
-        <div className="page-workspace">
-            <div className="page-header">
-                <div className="header-text">
-                    <h1>Daily Presence</h1>
-                    <p>Class: <span className="text-accent">{selectedClass}</span> • Session Date: {new Date(selectedDate).toLocaleDateString()}</p>
+        <div className="fade-in">
+            <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h3 className="card-title" style={{ fontSize: '1.25rem' }}>🎯 Daily Presence</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Class: {selectedClass} • Session Date: {new Date(selectedDate).toLocaleDateString()}</p>
                 </div>
-                <div className="header-actions">
-                    <div className="omnisearch-bar" style={{ width: 'auto' }}>
-                        <Calendar size={18} className="text-muted" />
-                        <input 
-                            type="date" 
-                            value={selectedDate} 
-                            onChange={e => setSelectedDate(e.target.value)}
-                        />
-                    </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <input 
+                        type="date" 
+                        className="glass-input"
+                        value={selectedDate} 
+                        onChange={e => setSelectedDate(e.target.value)}
+                        style={{ width: 'auto', padding: '0.4rem 0.75rem' }}
+                    />
+                    {hasUnsavedChanges && (
+                        <button className="btn-primary" onClick={handleSave} disabled={saveMutation.isPending}>
+                            <Save size={16} /> {saveMutation.isPending ? 'Syncing...' : 'Commit'}
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <div className="stat-icon green"><CheckCircle size={20} /></div>
+            <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
+                <div className="stat-card glass-card">
                     <div className="stat-value text-success">{isLoading ? '...' : counts.P}</div>
-                    <div className="stat-label">Total Present</div>
+                    <div className="stat-label">Present</div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-icon red"><XCircle size={20} /></div>
+                <div className="stat-card glass-card">
                     <div className="stat-value text-danger">{isLoading ? '...' : counts.A}</div>
-                    <div className="stat-label">Total Absent</div>
+                    <div className="stat-label">Absent</div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-icon amber"><Clock size={20} /></div>
+                <div className="stat-card glass-card">
                     <div className="stat-value text-warning">{isLoading ? '...' : counts.L}</div>
-                    <div className="stat-label">Total Late</div>
+                    <div className="stat-label">Late</div>
+                </div>
+                <div className="stat-card glass-card">
+                    <div className="stat-value" style={{color: 'var(--info)'}}>{isLoading ? '...' : Math.round((counts.P / (localStudents.length || 1)) * 100)}%</div>
+                    <div className="stat-label">Pulse Rate</div>
                 </div>
             </div>
 
-            <div className="filter-strip">
-                <div className="filter-label"><Filter size={14} /> Classes:</div>
+            <div className="filter-strip" style={{ marginBottom: '1.5rem' }}>
                 <div className="filter-scroll">
                     {classes.map(c => (
                         <button 
@@ -124,26 +134,11 @@ const Attendance = () => {
                         </button>
                     ))}
                 </div>
-                <div style={{ marginLeft: 'auto' }}>
-                    {hasUnsavedChanges && (
-                        <button 
-                            className="btn-primary" 
-                            onClick={handleSave} 
-                            disabled={saveMutation.isPending}
-                        >
-                            <Save size={18} />
-                            <span>{saveMutation.isPending ? 'Syncing...' : 'Commit Changes'}</span>
-                        </button>
-                    )}
-                </div>
             </div>
 
             <div className="presence-grid">
                 {isLoading ? (
-                    <div className="sync-overlay w-full" style={{ gridColumn: '1/-1', height: '300px' }}>
-                        <Users className="animate-bounce" />
-                        <span>Synchronizing Roll Call...</span>
-                    </div>
+                    <div className="shimmer" style={{ gridColumn: '1/-1', height: '200px' }}></div>
                 ) : localStudents.length === 0 ? (
                     <div className="empty-state" style={{ gridColumn: '1/-1', padding: '4rem' }}>
                         <Users size={48} className="text-muted" style={{ marginBottom: '1rem' }} />
@@ -154,16 +149,14 @@ const Attendance = () => {
                         <div 
                             key={s.id || i} 
                             onClick={() => toggle(i)}
-                            className="student-presence-card glass-card"
-                            style={{ '--accent-color': colors[s.status] }}
+                            className={`student-presence-card glass-card ${s.isDirty ? 'dirty' : ''}`}
+                            style={{ borderLeft: `4px solid ${colors[s.status]}` }}
                         >
-                            {s.isDirty && <div className="dirty-dot" title="Modified" />}
                             <div className="presence-avatar">
                                 <span className="initial">{s.name.charAt(0)}</span>
-                                <div className="status-ring"></div>
                             </div>
                             <div className="presence-info">
-                                <h3>{s.name.split(' ')[0]}</h3>
+                                <h3>{s.name}</h3>
                                 <div className={`presence-badge ${s.status}`}>
                                     {icons[s.status]}
                                     <span>{labels[s.status]}</span>
