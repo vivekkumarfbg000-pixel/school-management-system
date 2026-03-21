@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix client\" \"npx nodemon server/server.js\"",
     "build": "npm run build --prefix client",
-    "postinstall": "npm install --prefix client && npm install --prefix server"
+    "postinstall": "npm install --prefix client --legacy-peer-deps && npm install --prefix server --legacy-peer-deps"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
