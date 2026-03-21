@@ -42,6 +42,17 @@ const Dashboard = () => {
     refetchInterval: 30000 
   })
 
+  const { data: predictionsData, isLoading: isPredictionsLoading } = useQuery({
+    queryKey: ['aiPredictions'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/ai/predictions', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      return data.predictions || []
+    },
+    refetchInterval: 300000 // 5 mins
+  })
+
   // Framer Motion variants
   const containerVars = {
     hidden: { opacity: 0 },
@@ -152,6 +163,35 @@ const Dashboard = () => {
                 ))}
               </AnimatePresence>
            </div>
+        </div>
+      </motion.div>
+
+      {/* Predictive Risk Radar (Groq ML) */}
+      <motion.div variants={itemVars} className="card ai-radar-card" style={{ marginBottom: '2rem', background: 'linear-gradient(145deg, hsla(238, 81%, 20%, 0.1), hsla(170, 75%, 20%, 0.05))', border: '1px solid var(--primary-glow)' }}>
+        <div className="card-header" style={{ marginBottom: '1.5rem' }}>
+          <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+             <Activity size={20} className="text-primary" /> AI Predictive Risk Radar
+          </h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Real-time machine learning forecasts based on deep aggregate telemetry</p>
+        </div>
+        <div className="radar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+          {isPredictionsLoading ? (
+             [1,2,3].map(i => <div key={i} className="shimmer" style={{ height: '180px', borderRadius: 'var(--radius-md)' }}></div>)
+          ) : (predictionsData || []).length === 0 ? (
+             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>AI Engine is gathering telemetry...</div>
+          ) : (predictionsData || []).map((pred, i) => (
+             <div key={i} className="radar-item" style={{ 
+                 padding: '1.25rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', 
+                 borderTop: `3px solid var(--${pred.severity === 'critical' ? 'danger' : pred.severity === 'success' ? 'success' : pred.severity === 'warning' ? 'warning' : 'primary'})` 
+             }}>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 700 }}>{pred.category}</div>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>{pred.title}</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.5 }}>{pred.description}</p>
+                <div style={{ padding: '0.6rem 0.8rem', background: 'var(--glass-bg)', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border)' }}>
+                   <ArrowRight size={14} className="text-primary" /> {pred.action}
+                </div>
+             </div>
+          ))}
         </div>
       </motion.div>
 

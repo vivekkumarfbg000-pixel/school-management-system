@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import MainLayout from './components/layout/MainLayout'
+import PortalLayout from './components/layout/PortalLayout'
+import StudentPortal from './pages/StudentPortal'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
 import Attendance from './pages/Attendance'
@@ -31,6 +33,18 @@ const App = () => {
   }, [])
 
   if (!token) return <Login />
+
+  // Strict UI Bifurcation
+  if (user?.role === 'STUDENT' || user?.role === 'PARENT') {
+    return (
+      <Routes>
+        <Route element={<PortalLayout />}>
+          <Route path="/portal" element={<StudentPortal />} />
+          <Route path="*" element={<Navigate to="/portal" replace />} />
+        </Route>
+      </Routes>
+    )
+  }
 
   return (
     <Routes>

@@ -1,7 +1,7 @@
 import express from 'express';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import prisma from '../prismaClient.js';
+import supabase from '../utils/supabaseClient.js';
 import { protect } from '../middleware/auth.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
@@ -56,26 +56,26 @@ router.post('/verify', protect, asyncHandler(async (req, res) => {
       
       // If student info provided, internalize the payment into the ledger
       if (studentId) {
-          const student = await prisma.students.findUnique({ where: { id: studentId } });
-          if (!student) return res.status(404).json({ message: 'Student not found' });
+          const { data: student, error: studentErr } = await supabase
+              .from('students')
+              .select('id')
+              .eq('id', studentId)
+              .single();
+
+          if (studentErr || !student) {
+              return res.status(404).json({ message: 'Student not found' });
+          }
           
-          await prisma.fees.create({
-             data: {
-                 student_id: studentId,
-                 amount: amountPaid,
-                 due_date: new Date(),
-                 paid_date: new Date(),
-                 status: 'Paid',
-                 fee_type: feeType || 'Online Payment',
-                 receipt_no: `RZP-${razorpay_payment_id.slice(-6).toUpperCase()}`
-             }
-          });
-          
-          // Deduct from student balance
-          await prisma.students.update({
-             where: { id: studentId },
-             data: { balance: { decrement: amountPaid } }
-          });
+          await supabase.from('fees').insert([{
+              student_id: studentId,
+              amount: amountPaid,
+              paid_amount: amountPaid,
+              due_date: new Date().toISOString(),
+              paid_date: new Date().toISOString(),
+              status: 'Paid',
+              fee_type: feeType || 'Online Payment',
+              receipt_no: `RZP-${razorpay_payment_id.slice(-6).toUpperCase()}`
+          }]);
       }
 
       res.status(200).json({ message: 'Payment verified successfully', verified: true });

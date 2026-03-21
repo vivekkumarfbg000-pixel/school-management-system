@@ -98,3 +98,36 @@ export const generateExam = async (topic, gradeLevel, questionCount, difficulty)
 
   return JSON.parse(completion.choices[0]?.message?.content || '{}');
 };
+
+/**
+ * Generates advanced predictive AI insights for the Dashboard Risk Radar.
+ */
+export const generatePredictiveInsights = async (contextData) => {
+  const completion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: `You are the core Machine Learning intelligence engine for EduStream SaaS. Analyze this school's telemetry data to provide bleeding-edge predictive forecasts. Act like a highly advanced financial and operational AI.
+
+        Return exactly ONE JSON object with a "predictions" array. Each array item MUST have this shape:
+        {
+          "category": "Financial Forecast" | "Student Churn Risk" | "Operational Bottleneck" | "Academic Trend",
+          "severity": "critical" | "warning" | "success" | "info",
+          "title": "Short punchy title",
+          "description": "Detailed predictive analysis (e.g., 'Based on X, we project Y by next month.')",
+          "action": "Recommended action to take"
+        }
+        
+        Generate exactly 3 extremely realistic predictions.`
+      },
+      {
+        role: 'user',
+        content: JSON.stringify(contextData),
+      },
+    ],
+    model: 'llama-3.3-70b-versatile',
+    response_format: { type: 'json_object' },
+  });
+
+  return JSON.parse(completion.choices[0]?.message?.content || '{"predictions": []}');
+};

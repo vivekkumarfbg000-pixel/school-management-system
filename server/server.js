@@ -23,6 +23,7 @@ import exportRoutes from './routes/export.js';
 import reportsRoutes from './routes/reports.js';
 import settingsRoutes from './routes/settings.js';
 import payRoutes from './routes/pay.js';
+import portalRoutes from './routes/portal.js';
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/pay', payRoutes);
+app.use('/api/portal', portalRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

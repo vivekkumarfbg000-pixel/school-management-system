@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import supabase from '../utils/supabaseClient.js';
 import { protect } from '../middleware/auth.js';
+import { generateTimetable } from '../utils/timetableEngine.js';
 
 // GET /api/timetable
 router.get('/', protect, async (req, res) => {
@@ -40,6 +41,22 @@ router.post('/', protect, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to update timetable slot' });
+  }
+});
+
+// POST /api/timetable/auto-generate
+router.post('/auto-generate', protect, async (req, res) => {
+  try {
+    const { className, section, subjectConfig } = req.body;
+    if (!className || !section || !subjectConfig) {
+      return res.status(400).json({ message: 'Missing parameters for algorithmic generation' });
+    }
+
+    const newSlots = await generateTimetable(req.user.schoolId, className, section, subjectConfig);
+    res.json({ message: `Successfully generated ${newSlots.length} clash-free slots.`, slots: newSlots });
+  } catch (error) {
+    console.error('[TimetableEngine Error]:', error);
+    res.status(500).json({ message: 'Engine failed to compute non-conflicting slots. Consider adding more staff or tweaking subjects.' });
   }
 });
 

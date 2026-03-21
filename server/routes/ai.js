@@ -1,5 +1,5 @@
 import express from 'express';
-import { processAICommand, generateInsights, generateLessonPlan, generateExam } from '../utils/aiService.js';
+import { processAICommand, generateInsights, generateLessonPlan, generateExam, generatePredictiveInsights } from '../utils/aiService.js';
 import supabase from '../utils/supabaseClient.js';
 import { protect } from '../middleware/auth.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -80,6 +80,12 @@ router.get('/pulse', protect, asyncHandler(async (req, res) => {
   }
 
   res.json({ pulses });
+}));
+
+router.get('/predictions', protect, asyncHandler(async (req, res) => {
+  const contextData = await getSchoolContext(req.user.schoolId);
+  const aiPayload = await generatePredictiveInsights(contextData);
+  res.json(aiPayload);
 }));
 
 router.post('/lesson-plan', protect, asyncHandler(async (req, res) => {

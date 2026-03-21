@@ -10,6 +10,10 @@ const Timetable = () => {
     const [selectedSection, setSelectedSection] = useState('A')
     const [showModal, setShowModal] = useState(false)
     const [editingSlot, setEditingSlot] = useState(null)
+    const [showAutoModal, setShowAutoModal] = useState(false)
+    const [subjectConfig, setSubjectConfig] = useState({
+        'Maths': 6, 'Science': 6, 'English': 5, 'Hindi': 5, 'Social Studies': 5, 'Computer': 3
+    })
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const periods = [
@@ -51,6 +55,22 @@ const Timetable = () => {
         onError: () => toast.error('Failed to update slot')
     })
 
+    const autoGenerateMutation = useMutation({
+        mutationFn: async () => axios.post('/api/timetable/auto-generate', {
+            className: selectedClass,
+            section: selectedSection,
+            subjectConfig
+        }),
+        onSuccess: (res) => {
+            queryClient.invalidateQueries({ queryKey: ['timetable'] })
+            toast.success(res.data?.message || 'AI Timetable Generated Successfully! 🚀')
+            setShowAutoModal(false)
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || 'Engine failed to construct schedule')
+        }
+    })
+
     const handleSlotClick = (day, periodObj) => {
         const existing = timetableData.find(s => s.day === day && s.period === periodObj.num)
         setEditingSlot({
@@ -88,6 +108,9 @@ const Timetable = () => {
             <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 className="card-title" style={{ fontSize: '1.25rem' }}>🗓️ Timetable Hub</h3>
                 <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn-glass btn-sm" style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }} onClick={() => setShowAutoModal(true)}>
+                        <ShieldAlert size={16} /> Auto-Generate
+                    </button>
                     <div className="glass-pill" style={{ display: 'flex', gap: '0.5rem', padding: '0.25rem' }}>
                         <select value={selectedClass} onChange={e=>setSelectedClass(e.target.value)} className="glass-select">
                             {['6','7','8','9','10','11','12'].map(c => <option key={c} value={c}>Class {c}</option>)}
@@ -198,6 +221,50 @@ const Timetable = () => {
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
                                 <button className="btn-glass w-full" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button className="btn-primary w-full" onClick={() => saveMutation.mutate(editingSlot)}>Save Slot</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AI AUTO-GENERATE MODAL */}
+            {showAutoModal && (
+                <div className="modal-overlay" onClick={() => setShowAutoModal(false)}>
+                    <div className="modal-card glass-card fade-in" style={{ width: '450px' }} onClick={e => e.stopPropagation()}>
+                        <div className="card-header">
+                            <div>
+                                <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <ShieldAlert size={20} className="text-primary" /> Auto-Generate Engine
+                                </h3>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    Configure extreme-constraint algorithm for Class {selectedClass}-{selectedSection}
+                                </p>
+                            </div>
+                            <button className="btn-icon" onClick={() => setShowAutoModal(false)}><X size={18} /></button>
+                        </div>
+                        <div className="modal-body" style={{ padding: '1.5rem' }}>
+                            <div style={{ marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                Set required weekly frequencies for subjects. Algorithm will auto-assign random available proxy teachers if specific subject staff is missing.
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                                {Object.keys(subjectConfig).map(subj => (
+                                    <div key={subj} className="form-group">
+                                        <label>{subj}</label>
+                                        <input 
+                                            type="number" 
+                                            min="0" max="10"
+                                            className="glass-input" 
+                                            value={subjectConfig[subj]} 
+                                            onChange={e => setSubjectConfig({...subjectConfig, [subj]: parseInt(e.target.value) || 0})}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button className="btn-glass w-full" onClick={() => setShowAutoModal(false)}>Cancel</button>
+                                <button className="btn-primary w-full" onClick={() => autoGenerateMutation.mutate()} disabled={autoGenerateMutation.isPending}>
+                                    {autoGenerateMutation.isPending ? 'Computing...' : 'Launch Engine 🚀'}
+                                </button>
                             </div>
                         </div>
                     </div>
