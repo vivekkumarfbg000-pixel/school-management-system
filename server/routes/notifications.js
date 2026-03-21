@@ -3,12 +3,13 @@ const router = express.Router();
 import supabase from '../utils/supabaseClient.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { sendSMS } from '../utils/smsProvider.js';
+import { sendWhatsAppBroadcast } from '../utils/whatsappProvider.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 // POST /api/notifications/broadcast
-// Send a manual SMS to a specific class or everyone
+// Send a manual SMS/WhatsApp to a specific class or everyone
 router.post('/broadcast', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (req, res) => {
-  const { target, className, section, message } = req.body;
+  const { target, className, section, message, channels = ['sms'] } = req.body;
 
   if (!message) return res.status(400).json({ message: 'Message is required' });
 
@@ -27,16 +28,24 @@ router.post('/broadcast', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler
     return res.status(404).json({ message: 'No students found for target' });
   }
 
-  // Broadcast in background
+  const phoneNumbers = students.map(s => s.phone).filter(Boolean);
   let sentCount = 0;
-  for (const student of students) {
-      if (student.phone) {
-          await sendSMS(student.phone, message);
+
+  // Broadcast via WhatsApp
+  if (channels.includes('whatsapp')) {
+      await sendWhatsAppBroadcast(phoneNumbers, message);
+      sentCount += phoneNumbers.length;
+  }
+  
+  // Broadcast via SMS
+  if (channels.includes('sms')) {
+      for (const phone of phoneNumbers) {
+          await sendSMS(phone, message);
           sentCount++;
       }
   }
 
-  res.json({ message: `Broadcast successful. sent to ${sentCount} recipients.` });
+  res.json({ message: `Broadcast successful via ${channels.join(' & ')}. Processed ${sentCount} dispatches.` });
 }));
 
 // GET /api/notifications/notices

@@ -2,10 +2,13 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { Wallet, TrendingUp, AlertCircle, Sparkles, Receipt, Plus, X, ArrowRight, DollarSign } from 'lucide-react'
+import { Wallet, TrendingUp, AlertCircle, Sparkles, Receipt, Plus, X, ArrowRight, DollarSign, Download, Save, CreditCard } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
 
 const Finance = () => {
+    const { token } = useAuth()
+    const headers = { Authorization: `Bearer ${token}` }
     const queryClient = useQueryClient()
     
     // Modal state for collecting fee
@@ -13,7 +16,7 @@ const Finance = () => {
     const [selectedStudent, setSelectedStudent] = useState(null)
     const [feeType, setFeeType] = useState('Tuition')
     const [amount, setAmount] = useState('')
-
+    
     // Modal state for generating a test fee
     const [showGenModal, setShowGenModal] = useState(false)
     const [genAmount, setGenAmount] = useState('')
@@ -88,6 +91,69 @@ const Finance = () => {
         })
     }
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleRazorpayCheckout = async () => {
+        if (!amount || amount <= 0) return toast.error("Enter a valid amount")
+        const res = await loadRazorpayScript();
+        if (!res) return toast.error("Razorpay SDK failed to load. Are you online?");
+
+        try {
+            const { data: order } = await axios.post('/api/pay/create-order', {
+                expectedAmount: parseFloat(amount),
+                feeId: selectedStudent.id
+            }, { headers });
+
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_mock123",
+                amount: order.amount,
+                currency: order.currency,
+                name: "EduStream SaaS",
+                description: `Fee Payment - ${feeType}`,
+                order_id: order.id,
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await axios.post('/api/pay/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            studentId: selectedStudent.id,
+                            amountPaid: parseFloat(amount),
+                            feeType
+                        }, { headers });
+
+                        if (verifyRes.data.verified) {
+                            toast.success("Online Payment Successful!");
+                            queryClient.invalidateQueries({ queryKey: ['fees'] });
+                            setShowModal(false);
+                        }
+                    } catch (err) {
+                        toast.error(err.response?.data?.message || "Payment verification failed");
+                    }
+                },
+                prefill: {
+                    name: selectedStudent?.name,
+                    email: `${selectedStudent?.admissionNo}@edustream.com`,
+                    contact: "9999999999",
+                },
+                theme: { color: "#6366f1" }
+            };
+
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+        } catch (error) {
+            toast.error("Failed to initiate secure checkout");
+        }
+    }
+
     // derived stats
     const totalCollected = financeData.reduce((acc, curr) => acc + curr.totalPaid, 0)
     const totalPending = financeData.reduce((acc, curr) => acc + curr.balance, 0)
@@ -104,6 +170,10 @@ const Finance = () => {
                     <p>Global financial health and student fee reconciliation ledger.</p>
                 </div>
                 <div className="header-actions">
+                    <button className="btn-glass" onClick={() => window.open('/api/export/fee-report?type=daily', '_blank')}>
+                        <Download size={16} />
+                        <span>Daily Report (Excel)</span>
+                    </button>
                     <button className="btn-glass">
                         <TrendingUp size={16} />
                         <span>Financial Report</span>
@@ -187,6 +257,19 @@ const Finance = () => {
                                                 <Plus size={14} />
                                                 <span>Bill</span>
                                             </button>
+                                            {s.fees && s.fees.filter(f => f.status === 'Paid' && f.receipt_no).length > 0 && (
+                                                <button 
+                                                    className="btn-glass btn-sm" 
+                                                    style={{ color: 'var(--info)' }}
+                                                    onClick={() => {
+                                                        const paidFee = s.fees.find(f => f.status === 'Paid' && f.receipt_no)
+                                                        if (paidFee) window.open(`/api/export/fee-receipt/${paidFee.id}`, '_blank')
+                                                    }}
+                                                >
+                                                    <Download size={14} />
+                                                    <span>Receipt</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -230,10 +313,16 @@ const Finance = () => {
                                         <label>Amount to Realize</label>
                                         <input className="form-control" type="number" required value={amount} onChange={e=>setAmount(e.target.value)} max={selectedStudent?.balance} />
                                     </div>
-                                    <button type="submit" className="btn-primary w-full" style={{ marginTop: '1rem' }} disabled={collectMutation.isPending}>
-                                        <Save size={18} />
-                                        <span>{collectMutation.isPending ? 'Processing...' : 'Internalize Payment'}</span>
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                        <button type="submit" className="btn-glass w-full" style={{ color: 'var(--success)', border: '1px solid var(--success)' }} disabled={collectMutation.isPending}>
+                                            <Save size={18} />
+                                            <span>Cash / Cheque</span>
+                                        </button>
+                                        <button type="button" className="btn-primary w-full" onClick={handleRazorpayCheckout}>
+                                            <CreditCard size={18} />
+                                            <span>Pay Online</span>
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </motion.div>

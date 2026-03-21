@@ -1,5 +1,5 @@
 import express from 'express';
-import { processAICommand, generateInsights } from '../utils/aiService.js';
+import { processAICommand, generateInsights, generateLessonPlan, generateExam } from '../utils/aiService.js';
 import supabase from '../utils/supabaseClient.js';
 import { protect } from '../middleware/auth.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -80,6 +80,28 @@ router.get('/pulse', protect, asyncHandler(async (req, res) => {
   }
 
   res.json({ pulses });
+}));
+
+router.post('/lesson-plan', protect, asyncHandler(async (req, res) => {
+  const { topic, gradeLevel, duration } = req.body;
+  
+  if (!topic || !gradeLevel) {
+    return res.status(400).json({ message: 'Topic and Grade Level are required' });
+  }
+
+  const markdown = await generateLessonPlan(topic, gradeLevel, duration || 45);
+  res.json({ markdown });
+}));
+
+router.post('/exam-gen', protect, asyncHandler(async (req, res) => {
+  const { topic, gradeLevel, questionCount, difficulty } = req.body;
+  
+  if (!topic || !gradeLevel) {
+    return res.status(400).json({ message: 'Topic and Grade Level are required' });
+  }
+
+  const examData = await generateExam(topic, gradeLevel, questionCount || 10, difficulty || 'Medium');
+  res.json(examData);
 }));
 
 export default router;

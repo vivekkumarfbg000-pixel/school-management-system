@@ -19,6 +19,10 @@ import notificationRoutes from './routes/notifications.js';
 import dashboardRoutes from './routes/dashboard.js';
 import aiRoutes from './routes/ai.js';
 import searchRoutes from './routes/search.js';
+import exportRoutes from './routes/export.js';
+import reportsRoutes from './routes/reports.js';
+import settingsRoutes from './routes/settings.js';
+import payRoutes from './routes/pay.js';
 
 dotenv.config();
 
@@ -43,6 +47,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/pay', payRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

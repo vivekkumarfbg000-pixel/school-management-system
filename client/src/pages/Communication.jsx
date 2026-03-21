@@ -14,7 +14,8 @@ const Communication = () => {
         target: 'all',
         className: '',
         section: '',
-        message: ''
+        message: '',
+        channels: ['whatsapp', 'sms']
     })
     const [noticeData, setNoticeData] = useState({
         title: '',
@@ -46,7 +47,7 @@ const Communication = () => {
         onSuccess: (data) => {
             toast.success(data.message || "Broadcast sent successfully!")
             setShowBroadcastModal(false)
-            setBroadcastData({ target: 'all', className: '', section: '', message: '' })
+            setBroadcastData({ target: 'all', className: '', section: '', message: '', channels: ['whatsapp', 'sms'] })
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "Failed to send broadcast")
@@ -90,7 +91,7 @@ const Communication = () => {
                 <h3 className="card-title" style={{ fontSize: '1.25rem' }}>📢 Communication Hub</h3>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button onClick={() => setShowBroadcastModal(true)} className="quick-action-btn" style={{ background: 'var(--primary)', borderColor: 'var(--primary)', color: 'white' }}>
-                        <Send size={16} /> Broadcast SMS
+                        <Send size={16} /> Broadcast Msg
                     </button>
                     {isAuthorized && (
                         <button onClick={() => setShowNoticeModal(true)} className="quick-action-btn" style={{ background: 'rgba(59,130,246,0.15)', borderColor: 'var(--info)', color: 'var(--info)' }}>
@@ -182,10 +183,29 @@ const Communication = () => {
                                 <label>Message</label>
                                 <textarea rows="3" className="glass-input" required value={broadcastData.message} onChange={e=>setBroadcastData({...broadcastData, message: e.target.value})} placeholder="Type message..." />
                             </div>
+                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ marginBottom: '0.75rem' }}>Delivery Channels</label>
+                                <div style={{ display: 'flex', gap: '1.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                                        <input type="checkbox" checked={broadcastData.channels.includes('whatsapp')} onChange={(e) => {
+                                            const channels = e.target.checked ? [...broadcastData.channels, 'whatsapp'] : broadcastData.channels.filter(c => c !== 'whatsapp');
+                                            setBroadcastData({...broadcastData, channels})
+                                        }} />
+                                        WhatsApp 💬
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                                        <input type="checkbox" checked={broadcastData.channels.includes('sms')} onChange={(e) => {
+                                            const channels = e.target.checked ? [...broadcastData.channels, 'sms'] : broadcastData.channels.filter(c => c !== 'sms');
+                                            setBroadcastData({...broadcastData, channels})
+                                        }} />
+                                        Standard SMS 📱
+                                    </label>
+                                </div>
+                            </div>
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button type="button" className="btn-glass w-full" onClick={() => setShowBroadcastModal(false)}>Cancel</button>
-                                <button type="submit" disabled={broadcastMutation.isPending} className="btn-primary w-full">
-                                    {broadcastMutation.isPending ? 'Sending...' : 'Send SMS'}
+                                <button type="submit" disabled={broadcastMutation.isPending || broadcastData.channels.length === 0} className="btn-primary w-full">
+                                    {broadcastMutation.isPending ? 'Sending...' : 'Dispatch Broadcast'}
                                 </button>
                             </div>
                         </form>

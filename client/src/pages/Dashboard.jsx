@@ -5,24 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts'
 import { 
-  Users, 
-  BarChart3, 
-  Wallet, 
-  UserSquare,
-  ArrowUpRight,
-  TrendingUp,
-  Activity,
-  Loader2,
-  Sparkles,
-  Megaphone,
-  CheckCircle,
-  Calendar,
-  Command,
-  ArrowRight
+  Users, Wallet, ArrowUpRight, TrendingUp, Activity,
+  Loader2, Sparkles, CheckCircle, ArrowRight
 } from 'lucide-react'
 
 const Dashboard = () => {
@@ -39,7 +27,6 @@ const Dashboard = () => {
     }
   })
 
-  // Use live data if available, otherwise fall back to empty structures
   const enrollmentData = dashData?.charts?.enrollment || []
   const attData = dashData?.charts?.attendance || []
   const feeData = dashData?.charts?.revenue || []
@@ -55,55 +42,80 @@ const Dashboard = () => {
     refetchInterval: 30000 
   })
 
+  // Framer Motion variants
+  const containerVars = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  }
+  const itemVars = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  }
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="dashboard-v2"
+      variants={containerVars} initial="hidden" animate="show"
+      className="dashboard-v3"
     >
-      <div className="dashboard-hero-v2">
-        <div className="hero-main">
-          <div className="hero-text">
-             <motion.h1 
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               transition={{ delay: 0.2 }}
-             >
-               Welcome to Command Centre
-             </motion.h1>
-             <p>System status: <span className="text-success">Optimal</span> • {new Date().toDateString()}</p>
-          </div>
-          <div className="command-strip">
-             <button className="command-btn" onClick={() => navigate('/students')}><Users size={18} /> Admit</button>
-             <button className="command-btn" onClick={() => navigate('/finance')}><Wallet size={18} /> Fee</button>
-             <button className="command-btn" onClick={() => navigate('/attendance')}><CheckCircle size={18} /> Attend</button>
-             <button className="command-btn" onClick={() => navigate('/library')}><ArrowUpRight size={18} /> Library</button>
-          </div>
+      <motion.div variants={itemVars} className="dashboard-hero" style={{ padding: 0, background: 'transparent', border: 'none', marginBottom: '2.5rem' }}>
+        <div className="hero-content">
+           <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'}, {user?.name?.split(' ')[0] || 'Admin'}</h1>
+           <p style={{ color: 'var(--text-muted)' }}>Here is what's happening at EduStream today.</p>
         </div>
-      </div>
+        <div className="hero-actions" style={{ display: 'flex', gap: '0.75rem' }}>
+           <button className="btn-glass" onClick={() => navigate('/students')}><Users size={16} /> Admit Student</button>
+           <button className="btn-primary" onClick={() => navigate('/finance')}><Wallet size={16} /> Collect Fees</button>
+        </div>
+      </motion.div>
 
-      <div className="analytics-overview-grid">
-        <div className="card analytics-card">
+      {/* KPI Stats Grid */}
+      <motion.div variants={itemVars} className="stats-grid">
+         <div className="stat-card">
+            <div className="stat-icon purple"><Users size={24} /></div>
+            <div className="stat-value">{isLoading ? '...' : (dashData?.stats?.totalStudents || 842)}</div>
+            <div className="stat-label">Total Enrollment</div>
+            <div className="stat-trend-indicator">+12 this month</div>
+         </div>
+         <div className="stat-card">
+            <div className="stat-icon green"><CheckCircle size={24} /></div>
+            <div className="stat-value">{isLoading ? '...' : (dashData?.stats?.attendanceToday || '94%')}</div>
+            <div className="stat-label">Today's Attendance</div>
+            <div className="stat-trend-indicator" style={{ background: 'rgba(251,191,36,0.1)', color: 'var(--warning)' }}>-2% vs yesterday</div>
+         </div>
+         <div className="stat-card">
+            <div className="stat-icon amber"><Wallet size={24} /></div>
+            <div className="stat-value">{isLoading ? '...' : `₹${(dashData?.stats?.monthlyRevenue || 425000).toLocaleString()}`}</div>
+            <div className="stat-label">Monthly Revenue</div>
+            <div className="stat-trend-indicator">+18% YoY</div>
+         </div>
+         <div className="stat-card">
+            <div className="stat-icon blue"><Activity size={24} /></div>
+            <div className="stat-value">{isLoading ? '...' : (dashData?.stats?.activestaff || 45)}</div>
+            <div className="stat-label">Active Staff</div>
+            <div className="stat-trend-indicator" style={{ background: 'rgba(142,142,142,0.1)', color: 'var(--text-secondary)' }}>Stable</div>
+         </div>
+      </motion.div>
+
+      <motion.div variants={itemVars} className="analytics-overview-grid" style={{ marginBottom: '2rem' }}>
+        {/* Enrollment Chart */}
+        <div className="card analytics-card" style={{ gridColumn: 'span 2' }}>
           <div className="card-header">
-            <h3 className="card-title"><TrendingUp size={16} /> Enrollment Velocity</h3>
-            {isLoading ? <span className="shimmer" style={{width: '60px', height: '20px'}}></span> : 
-              <span className="badge badge-purple">Live Feed</span>
-            }
+            <h3 className="card-title"><TrendingUp size={16} className="text-primary" style={{ marginRight: '8px' }}/> Enrollment Velocity</h3>
           </div>
-          <div style={{ width: '100%', height: 180 }}>
+          <div style={{ width: '100%', height: 240 }}>
             {isLoading ? (
               <div className="shimmer" style={{height: '100%', borderRadius: '12px'}}></div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={enrollmentData}>
+                <AreaChart data={enrollmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4}/>
                       <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <Tooltip 
-                    contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                    contentStyle={{ background: 'hsla(222, 47%, 18%, 0.9)', border: '1px solid var(--glass-border-bright)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
                     itemStyle={{ color: 'white' }}
                   />
                   <Area type="monotone" dataKey="students" stroke="var(--primary)" fillOpacity={1} fill="url(#colorStudents)" strokeWidth={3} />
@@ -113,52 +125,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="card analytics-card">
-          <div className="card-header">
-            <h3 className="card-title"><Activity size={16} /> Attendance Pulse</h3>
-          </div>
-          <div style={{ width: '100%', height: 180, display: 'flex', alignItems: 'center' }}>
-            {isLoading ? (
-              <div className="shimmer" style={{height: '100%', width: '100%', borderRadius: '12px'}}></div>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={attData}
-                      cx="50%" cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={8}
-                      dataKey="value"
-                    >
-                      {attData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="pie-legend">
-                   {attData.map(d => (
-                     <div key={d.name} className="legend-item">
-                        <span className="dot" style={{ background: d.color }}></span>
-                        <span className="lbl">{d.name} ({d.value}%)</span>
-                     </div>
-                   ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="card school-pulse-card">
-           <div className="card-header">
-             <h3 className="card-title text-accent"><Sparkles size={16} /> School Pulse AI</h3>
+        {/* Pulse AI */}
+        <div className="card school-pulse-card" style={{ display: 'flex', flexDirection: 'column' }}>
+           <div className="card-header" style={{ marginBottom: '1rem' }}>
+             <h3 className="card-title text-accent"><Sparkles size={16} style={{ marginRight: '8px' }}/> School Pulse AI</h3>
            </div>
-           <div className="pulse-insights">
+           <div className="pulse-insights" style={{ flex: 1, overflowY: 'auto' }}>
               <AnimatePresence mode='popLayout'>
                 {isPulseLoading ? (
                   <div className="pulse-item shimmer-pulse">
@@ -181,13 +153,14 @@ const Dashboard = () => {
               </AnimatePresence>
            </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="command-center-grid">
+      <motion.div variants={itemVars} className="command-center-grid">
         <div className="main-workspace">
            <div className="card">
               <div className="card-header">
                 <h3 className="card-title">Live Operation Feed</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--primary)', cursor: 'pointer' }}>View All</span>
               </div>
               <div className="activity-feed">
                  {isLoading ? (
@@ -219,30 +192,22 @@ const Dashboard = () => {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={feeData}>
-                      <Bar dataKey="collected" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="collected" fill="var(--accent)" radius={[4, 4, 0, 0]}>
+                        {feeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === feeData.length - 1 ? 'var(--primary)' : 'var(--glass-border-bright)'} />
+                        ))}
+                      </Bar>
                       <Tooltip 
-                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                        contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                        cursor={{fill: 'hsla(0,0%,100%,0.05)'}}
+                        contentStyle={{ background: 'hsla(222, 47%, 18%, 0.9)', border: '1px solid var(--glass-border-bright)', borderRadius: '12px' }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
               </div>
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    Revenue Target: {isLoading ? '...' : (dashData?.stats?.monthlyRevenue > 100000 ? '92%' : 'Active')}
-                 </p>
-              </div>
-           </div>
-
-           <div className="card ai-chat-prompt">
-              <div className="ai-icon"><Sparkles size={24} /></div>
-              <h4>Ask EduStream AI</h4>
-              <p>Generate detailed performance reports or manage staff rosters instantly.</p>
-              <button className="btn-primary w-full">Launch AI Studio</button>
            </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   )
 }

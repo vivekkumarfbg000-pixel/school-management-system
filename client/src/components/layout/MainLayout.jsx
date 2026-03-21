@@ -6,6 +6,7 @@ import {
   Users, 
   CheckCircle, 
   Wallet, 
+  Banknote,
   BookOpen, 
   Megaphone, 
   UserSquare, 
@@ -51,12 +52,14 @@ const MainLayout = ({ user, handleLogout }) => {
 
   const navItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/' },
+    { id: 'ai-studio', icon: <Sparkles size={20} />, label: 'AI Studio', path: '/ai-studio' },
     { id: 'students', icon: <Users size={20} />, label: 'Students', path: '/students' },
     { id: 'attendance', icon: <CheckCircle size={20} />, label: 'Attendance', path: '/attendance' },
     { id: 'finance', icon: <Wallet size={20} />, label: 'Finance', path: '/finance' },
     { id: 'academics', icon: <BookOpen size={20} />, label: 'Academics', path: '/academics' },
     { id: 'communication', icon: <Megaphone size={20} />, label: 'Broadcast', path: '/communication' },
     { id: 'staff', icon: <UserSquare size={20} />, label: 'Staff', path: '/staff' },
+    { id: 'payroll', icon: <Banknote size={20} />, label: 'Payroll', path: '/payroll' },
     { id: 'timetable', icon: <Calendar size={20} />, label: 'Timetable', path: '/timetable' },
     { id: 'transport', icon: <Bus size={20} />, label: 'Transport', path: '/transport' },
     { id: 'library', icon: <Library size={20} />, label: 'Library', path: '/library' },

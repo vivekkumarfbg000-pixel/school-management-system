@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { Users, UserPlus, Search, Trash2, ArrowRight } from 'lucide-react'
+import { Users, UserPlus, Search, Trash2, ArrowRight, BadgeCheck, FileText } from 'lucide-react'
 
 const Students = () => {
     const [search, setSearch] = useState('')
@@ -38,6 +38,17 @@ const Students = () => {
     const handleDelete = (id) => {
         if (!window.confirm("Are you sure you want to remove this student?")) return;
         deleteMutation.mutate(id)
+    }
+
+    const handleGenerateID = (id) => {
+        window.open(`/api/export/id-card/${id}`, '_blank')
+    }
+
+    const handleGenerateTC = (id) => {
+        if (window.confirm("Generate a Transfer Certificate? This updates the student status automatically.")) {
+            window.open(`/api/export/tc/${id}`, '_blank')
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: ['students'] }), 1500)
+        }
     }
 
     const statusBadge = (s) => s === 'Active' ? 'badge-success' : s === 'TC Issued' ? 'badge-warning' : 'badge-danger'
@@ -131,14 +142,18 @@ const Students = () => {
                                     <td>{s.gender === 'Male' ? '👦' : '👧'} <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>{s.gender}</span></td>
                                     <td><span className={`badge ${statusBadge(s.status)}`}><span className="badge-dot"></span>{s.status}</span></td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <button 
-                                            className="btn-icon danger" 
-                                            onClick={() => handleDelete(s.id)} 
-                                            disabled={deleteMutation.isPending}
-                                            title="Remove Student"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                            <button className="btn-icon" onClick={() => handleGenerateID(s.id)} title="Print ID Card" style={{ color: 'var(--primary)' }}><BadgeCheck size={16} /></button>
+                                            <button className="btn-icon" onClick={() => handleGenerateTC(s.id)} title="Issue TC" style={{ color: 'var(--warning)' }}><FileText size={16} /></button>
+                                            <button 
+                                                className="btn-icon danger" 
+                                                onClick={() => handleDelete(s.id)} 
+                                                disabled={deleteMutation.isPending}
+                                                title="Remove Student"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

@@ -63,3 +63,38 @@ export const generateInsights = async (dataSummary) => {
 
   return JSON.parse(completion.choices[0]?.message?.content || '{}');
 };
+
+/**
+ * Generates a structured Markdown lesson plan.
+ */
+export const generateLessonPlan = async (topic, gradeLevel, duration) => {
+  const completion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert curriculum designer. Draft a comprehensive lesson plan for Grade ${gradeLevel} on the topic: "${topic}". The duration is ${duration} minutes. Include Learning Objectives, Required Materials, Introduction, Core Activity, Conclusion, and a creative Homework assignment. Output MUST be purely in markdown format with no wrapping blocks.`
+      }
+    ],
+    model: 'llama-3.3-70b-versatile',
+  });
+
+  return completion.choices[0]?.message?.content || 'Failed to generate lesson plan.';
+};
+
+/**
+ * Generates a JSON question bank for exams.
+ */
+export const generateExam = async (topic, gradeLevel, questionCount, difficulty) => {
+  const completion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert examiner. Generate a ${questionCount}-question multiple-choice exam for Grade ${gradeLevel} on the topic: "${topic}" with ${difficulty} difficulty. Output MUST be precisely in the following JSON format: { "examTitle": "string", "questions": [ { "question": "string", "options": ["A", "B", "C", "D"], "correctAnswer": "string (the exact option text)", "explanation": "string" } ] }`
+      }
+    ],
+    model: 'llama-3.3-70b-versatile',
+    response_format: { type: 'json_object' },
+  });
+
+  return JSON.parse(completion.choices[0]?.message?.content || '{}');
+};
