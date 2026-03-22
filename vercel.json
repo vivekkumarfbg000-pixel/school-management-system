@@ -1,3 +1,21 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/login",
+      "destination": "/api/login.js"
+    },
+    {
+      "source": "/api/signup",
+      "destination": "/api/signup.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/all.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/$1"
+    }
+  ]
 }
