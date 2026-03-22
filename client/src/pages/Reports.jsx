@@ -10,7 +10,7 @@ const Reports = () => {
 
     const { data: overview = {}, isLoading } = useQuery({
         queryKey: ['reports-overview'],
-        queryFn: async () => { const { data } = await axios.get('/api/reports/overview', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/reports/overview', { headers }); return data }
     })
 
     const kpis = [
@@ -21,10 +21,10 @@ const Reports = () => {
     ]
 
     const reportCards = [
-        { icon: '🎓', title: 'Student List', desc: 'Complete student directory with details', type: 'Student', action: () => window.open('/api/export/students', '_blank') },
+        { icon: '🎓', title: 'Student List', desc: 'Complete student directory with details', type: 'Student', action: () => window.open('/export/students', '_blank') },
         { icon: '✅', title: 'Attendance Report', desc: 'Monthly class-wise attendance summary', type: 'Attendance', action: null },
-        { icon: '💰', title: 'Daily Fee Collection', desc: 'Today\'s fee collection receipts', type: 'Finance', action: () => window.open('/api/export/fee-report?type=daily', '_blank') },
-        { icon: '📊', title: 'Monthly Fee Report', desc: 'This month\'s complete fee summary', type: 'Finance', action: () => window.open('/api/export/fee-report?type=monthly', '_blank') },
+        { icon: '💰', title: 'Daily Fee Collection', desc: 'Today\'s fee collection receipts', type: 'Finance', action: () => window.open('/export/fee-report?type=daily', '_blank') },
+        { icon: '📊', title: 'Monthly Fee Report', desc: 'This month\'s complete fee summary', type: 'Finance', action: () => window.open('/export/fee-report?type=monthly', '_blank') },
         { icon: '👨‍🏫', title: 'Staff Report', desc: 'Staff directory and attendance', type: 'HR' },
         { icon: '🚌', title: 'Transport Report', desc: 'Route-wise students, vehicles', type: 'Transport' },
         { icon: '📖', title: 'Library Report', desc: 'Most issued books, overdue register', type: 'Library' },

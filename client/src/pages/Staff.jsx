@@ -21,14 +21,14 @@ const Staff = () => {
     const { data: staffList = [], isLoading } = useQuery({
         queryKey: ['staff'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/staff')
+            const { data } = await axios.get('/staff')
             return data
         }
     })
 
     const addMutation = useMutation({
         mutationFn: async (variables) => {
-            await axios.post('/api/staff', variables)
+            await axios.post('/staff', variables)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['staff'] })
@@ -47,7 +47,7 @@ const Staff = () => {
 
     const deleteMutation = useMutation({
         mutationFn: async (id) => {
-            await axios.delete(`/api/staff/${id}`)
+            await axios.delete(`/staff/${id}`)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['staff'] })

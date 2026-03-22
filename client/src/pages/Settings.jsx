@@ -26,12 +26,12 @@ const Settings = () => {
 
     const { data: school, isLoading } = useQuery({
         queryKey: ['school-profile'],
-        queryFn: async () => { const { data } = await axios.get('/api/settings/school', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/settings/school', { headers }); return data }
     })
 
     const { data: sessions = [] } = useQuery({
         queryKey: ['academic-sessions'],
-        queryFn: async () => { const { data } = await axios.get('/api/settings/sessions', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/settings/sessions', { headers }); return data }
     })
 
     useEffect(() => {
@@ -46,13 +46,13 @@ const Settings = () => {
     }, [school])
 
     const updateSchoolMutation = useMutation({
-        mutationFn: async (vars) => { const { data } = await axios.put('/api/settings/school', vars, { headers }); return data },
+        mutationFn: async (vars) => { const { data } = await axios.put('/settings/school', vars, { headers }); return data },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['school-profile'] }); toast.success('School profile updated!'); setEditMode(false) },
         onError: () => toast.error('Failed to update')
     })
 
     const createSessionMutation = useMutation({
-        mutationFn: async (vars) => { const { data } = await axios.post('/api/settings/sessions', vars, { headers }); return data },
+        mutationFn: async (vars) => { const { data } = await axios.post('/settings/sessions', vars, { headers }); return data },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['academic-sessions'] }); toast.success('Session created!'); setShowSessionModal(false) },
         onError: () => toast.error('Failed to create session')
     })

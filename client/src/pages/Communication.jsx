@@ -29,7 +29,7 @@ const Communication = () => {
     const { data: notices = [], isLoading: isLoadingNotices } = useQuery({
         queryKey: ['notices'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/notifications/notices', {
+            const { data } = await axios.get('/notifications/notices', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -39,7 +39,7 @@ const Communication = () => {
     // 2. Broadcast SMS Mutation
     const broadcastMutation = useMutation({
         mutationFn: async (variables) => {
-            const { data } = await axios.post('/api/notifications/broadcast', variables, {
+            const { data } = await axios.post('/notifications/broadcast', variables, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -57,7 +57,7 @@ const Communication = () => {
     // 3. Create Notice Mutation
     const createNoticeMutation = useMutation({
         mutationFn: async (variables) => {
-            const { data } = await axios.post('/api/notifications/notices', variables, {
+            const { data } = await axios.post('/notifications/notices', variables, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data

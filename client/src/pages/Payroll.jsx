@@ -22,45 +22,45 @@ const Payroll = () => {
     // Queries
     const { data: slips = [], isLoading: loadingSlips } = useQuery({
         queryKey: ['payroll-slips'],
-        queryFn: async () => { const { data } = await axios.get('/api/payroll/slips', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/payroll/slips', { headers }); return data }
     })
 
     const { data: leaves = [], isLoading: loadingLeaves } = useQuery({
         queryKey: ['payroll-leaves'],
-        queryFn: async () => { const { data } = await axios.get('/api/payroll/leaves', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/payroll/leaves', { headers }); return data }
     })
 
     const { data: staffList = [] } = useQuery({
         queryKey: ['staff'],
-        queryFn: async () => { const { data } = await axios.get('/api/staff', { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get('/staff', { headers }); return data }
     })
 
     const { data: staffAttendance = [], isLoading: loadingAttendance } = useQuery({
         queryKey: ['staff-attendance', attendanceMonth],
-        queryFn: async () => { const { data } = await axios.get(`/api/payroll/staff-attendance?month=${attendanceMonth}`, { headers }); return data }
+        queryFn: async () => { const { data } = await axios.get(`/payroll/staff-attendance?month=${attendanceMonth}`, { headers }); return data }
     })
 
     // Mutations
     const generateMutation = useMutation({
-        mutationFn: async (vars) => { const { data } = await axios.post('/api/payroll/generate', vars, { headers }); return data },
+        mutationFn: async (vars) => { const { data } = await axios.post('/payroll/generate', vars, { headers }); return data },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll-slips'] }); toast.success('Salary slip generated!'); setShowGenerateModal(false) },
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to generate')
     })
 
     const payMutation = useMutation({
-        mutationFn: async (id) => { await axios.put(`/api/payroll/slips/${id}/pay`, {}, { headers }) },
+        mutationFn: async (id) => { await axios.put(`/payroll/slips/${id}/pay`, {}, { headers }) },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll-slips'] }); toast.success('Marked as paid') },
         onError: () => toast.error('Failed to update')
     })
 
     const leaveApplyMutation = useMutation({
-        mutationFn: async (vars) => { const { data } = await axios.post('/api/payroll/leaves/apply', vars, { headers }); return data },
+        mutationFn: async (vars) => { const { data } = await axios.post('/payroll/leaves/apply', vars, { headers }); return data },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll-leaves'] }); toast.success('Leave applied!'); setShowLeaveModal(false) },
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to apply leave')
     })
 
     const leaveActionMutation = useMutation({
-        mutationFn: async ({ id, status }) => { await axios.put(`/api/payroll/leaves/${id}`, { status }, { headers }) },
+        mutationFn: async ({ id, status }) => { await axios.put(`/payroll/leaves/${id}`, { status }, { headers }) },
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['payroll-leaves'] }); toast.success('Leave updated') },
         onError: () => toast.error('Failed to update leave')
     })
@@ -72,7 +72,7 @@ const Payroll = () => {
     const pendingLeaves = leaves.filter(l => l.status === 'Pending').length
 
     const handleDownloadSlip = (id) => {
-        window.open(`/api/export/salary-slip/${id}`, '_blank')
+        window.open(`/export/salary-slip/${id}`, '_blank')
     }
 
     return (

@@ -26,14 +26,14 @@ const Finance = () => {
     const { data: financeData = [], isLoading } = useQuery({
         queryKey: ['fees'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/fees')
+            const { data } = await axios.get('/fees')
             return data
         }
     })
 
     const collectMutation = useMutation({
         mutationFn: async (variables) => {
-            await axios.post('/api/fees/collect', variables)
+            await axios.post('/fees/collect', variables)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['fees'] })
@@ -47,7 +47,7 @@ const Finance = () => {
 
     const generateMutation = useMutation({
         mutationFn: async (variables) => {
-            await axios.post('/api/fees/generate', variables)
+            await axios.post('/fees/generate', variables)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['fees'] })
@@ -107,7 +107,7 @@ const Finance = () => {
         if (!res) return toast.error("Razorpay SDK failed to load. Are you online?");
 
         try {
-            const { data: order } = await axios.post('/api/pay/create-order', {
+            const { data: order } = await axios.post('/pay/create-order', {
                 expectedAmount: parseFloat(amount),
                 feeId: selectedStudent.id
             }, { headers });
@@ -121,7 +121,7 @@ const Finance = () => {
                 order_id: order.id,
                 handler: async function (response) {
                     try {
-                        const verifyRes = await axios.post('/api/pay/verify', {
+                        const verifyRes = await axios.post('/pay/verify', {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
@@ -170,7 +170,7 @@ const Finance = () => {
                     <p>Global financial health and student fee reconciliation ledger.</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn-glass" onClick={() => window.open('/api/export/fee-report?type=daily', '_blank')}>
+                    <button className="btn-glass" onClick={() => window.open('/export/fee-report?type=daily', '_blank')}>
                         <Download size={16} />
                         <span>Daily Report (Excel)</span>
                     </button>
@@ -263,7 +263,7 @@ const Finance = () => {
                                                     style={{ color: 'var(--info)' }}
                                                     onClick={() => {
                                                         const paidFee = s.fees.find(f => f.status === 'Paid' && f.receipt_no)
-                                                        if (paidFee) window.open(`/api/export/fee-receipt/${paidFee.id}`, '_blank')
+                                                        if (paidFee) window.open(`/export/fee-receipt/${paidFee.id}`, '_blank')
                                                     }}
                                                 >
                                                     <Download size={14} />

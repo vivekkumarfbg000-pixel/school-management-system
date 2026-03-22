@@ -11,14 +11,14 @@ const Students = () => {
     const { data: students = [], isLoading } = useQuery({
         queryKey: ['students'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/students')
+            const { data } = await axios.get('/students')
             return data
         }
     })
 
     const deleteMutation = useMutation({
         mutationFn: async (id) => {
-            await axios.delete(`/api/students/${id}`)
+            await axios.delete(`/students/${id}`)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['students'] })
@@ -41,12 +41,12 @@ const Students = () => {
     }
 
     const handleGenerateID = (id) => {
-        window.open(`/api/export/id-card/${id}`, '_blank')
+        window.open(`/export/id-card/${id}`, '_blank')
     }
 
     const handleGenerateTC = (id) => {
         if (window.confirm("Generate a Transfer Certificate? This updates the student status automatically.")) {
-            window.open(`/api/export/tc/${id}`, '_blank')
+            window.open(`/export/tc/${id}`, '_blank')
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['students'] }), 1500)
         }
     }

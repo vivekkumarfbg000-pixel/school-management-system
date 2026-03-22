@@ -19,7 +19,7 @@ const Transport = () => {
     const { data: vehicles = [], isLoading } = useQuery({
         queryKey: ['vehicles'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/transport/vehicles', {
+            const { data } = await axios.get('/transport/vehicles', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -29,7 +29,7 @@ const Transport = () => {
     const { data: students = [] } = useQuery({
         queryKey: ['students-mini'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/students', {
+            const { data } = await axios.get('/students', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -37,7 +37,7 @@ const Transport = () => {
     })
 
     const addMutation = useMutation({
-        mutationFn: async (vehicle) => axios.post('/api/transport/add', vehicle, {
+        mutationFn: async (vehicle) => axios.post('/transport/add', vehicle, {
             headers: { Authorization: `Bearer ${token}` }
         }),
         onSuccess: () => {
@@ -50,7 +50,7 @@ const Transport = () => {
     })
 
     const assignMutation = useMutation({
-        mutationFn: async (data) => axios.post('/api/transport/assign', data, {
+        mutationFn: async (data) => axios.post('/transport/assign', data, {
             headers: { Authorization: `Bearer ${token}` }
         }),
         onSuccess: () => {

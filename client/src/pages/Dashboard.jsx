@@ -20,7 +20,7 @@ const Dashboard = () => {
   const { data: dashData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/dashboard/stats', {
+      const { data } = await axios.get('/dashboard/stats', {
         headers: { Authorization: `Bearer ${token}` }
       })
       return data
@@ -34,7 +34,7 @@ const Dashboard = () => {
   const { data: pulseData, isLoading: isPulseLoading } = useQuery({
     queryKey: ['schoolPulse'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/ai/pulse', {
+      const { data } = await axios.get('/ai/pulse', {
         headers: { Authorization: `Bearer ${token}` }
       })
       return data.pulses
@@ -45,7 +45,7 @@ const Dashboard = () => {
   const { data: predictionsData, isLoading: isPredictionsLoading } = useQuery({
     queryKey: ['aiPredictions'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/ai/predictions', {
+      const { data } = await axios.get('/ai/predictions', {
         headers: { Authorization: `Bearer ${token}` }
       })
       return data.predictions || []

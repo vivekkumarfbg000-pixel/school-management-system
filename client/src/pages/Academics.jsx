@@ -18,7 +18,7 @@ const Academics = () => {
     const { data: exams = [], isLoading: isLoadingExams } = useQuery({
         queryKey: ['exams'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/academics/exams', {
+            const { data } = await axios.get('/academics/exams', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -28,7 +28,7 @@ const Academics = () => {
     const { data: toppers = [], isLoading: isLoadingToppers } = useQuery({
         queryKey: ['toppers'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/academics/toppers', {
+            const { data } = await axios.get('/academics/toppers', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -38,7 +38,7 @@ const Academics = () => {
     const { data: stats = [], isLoading: isLoadingStats } = useQuery({
         queryKey: ['academic-stats'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/academics/stats', {
+            const { data } = await axios.get('/academics/stats', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -47,7 +47,7 @@ const Academics = () => {
 
     const createExamMutation = useMutation({
         mutationFn: async (variables) => {
-            await axios.post('/api/academics/exams', variables, {
+            await axios.post('/academics/exams', variables, {
                 headers: { Authorization: `Bearer ${token}` }
             })
         },

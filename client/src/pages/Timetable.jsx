@@ -32,7 +32,7 @@ const Timetable = () => {
     const { data: timetableData = [], isLoading } = useQuery({
         queryKey: ['timetable', selectedClass, selectedSection],
         queryFn: async () => {
-            const { data } = await axios.get(`/api/timetable?className=${selectedClass}&section=${selectedSection}`)
+            const { data } = await axios.get(`/timetable?className=${selectedClass}&section=${selectedSection}`)
             return data
         }
     })
@@ -40,13 +40,13 @@ const Timetable = () => {
     const { data: staffList = [] } = useQuery({
         queryKey: ['timetable-staff'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/timetable/staff')
+            const { data } = await axios.get('/timetable/staff')
             return data
         }
     })
 
     const saveMutation = useMutation({
-        mutationFn: async (slotData) => axios.post('/api/timetable', slotData),
+        mutationFn: async (slotData) => axios.post('/timetable', slotData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['timetable'] })
             toast.success('Timetable updated')
@@ -56,7 +56,7 @@ const Timetable = () => {
     })
 
     const autoGenerateMutation = useMutation({
-        mutationFn: async () => axios.post('/api/timetable/auto-generate', {
+        mutationFn: async () => axios.post('/timetable/auto-generate', {
             className: selectedClass,
             section: selectedSection,
             subjectConfig

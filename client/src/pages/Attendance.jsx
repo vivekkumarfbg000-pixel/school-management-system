@@ -21,7 +21,7 @@ const Attendance = () => {
         queryKey: ['attendance', selectedClass, selectedDate],
         queryFn: async () => {
             const [className, section] = selectedClass.split('-')
-            const { data } = await axios.get(`/api/attendance?className=${className}&section=${section}&date=${selectedDate}`, { headers })
+            const { data } = await axios.get(`/attendance?className=${className}&section=${section}&date=${selectedDate}`, { headers })
             return data.map(s => ({
                 ...s,
                 status: s.status === 'Present' ? 'P' : s.status === 'Absent' ? 'A' : s.status === 'Late' ? 'L' : 'P',
@@ -35,7 +35,7 @@ const Attendance = () => {
         queryKey: ['attendance-summary', selectedClass, summaryMonth],
         queryFn: async () => {
             const [className, section] = selectedClass.split('-')
-            const { data } = await axios.get(`/api/attendance/summary?className=${className}&section=${section}&month=${summaryMonth}`, { headers })
+            const { data } = await axios.get(`/attendance/summary?className=${className}&section=${section}&month=${summaryMonth}`, { headers })
             return data
         },
         enabled: viewMode === 'summary'
@@ -47,7 +47,7 @@ const Attendance = () => {
 
     const saveMutation = useMutation({
         mutationFn: async (records) => {
-            await axios.post('/api/attendance/batch', { records, date: selectedDate }, { headers })
+            await axios.post('/attendance/batch', { records, date: selectedDate }, { headers })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['attendance'] })
@@ -81,7 +81,7 @@ const Attendance = () => {
 
     const handleExportAttendance = () => {
         const [className, section] = selectedClass.split('-')
-        window.open(`/api/export/attendance?className=${className}&section=${section}&month=${summaryMonth}`, '_blank')
+        window.open(`/export/attendance?className=${className}&section=${section}&month=${summaryMonth}`, '_blank')
     }
 
     const counts = { 

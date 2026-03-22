@@ -21,7 +21,7 @@ const Library = () => {
     const { data: books = [], isLoading } = useQuery({
         queryKey: ['books'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/library/books', {
+            const { data } = await axios.get('/library/books', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -31,7 +31,7 @@ const Library = () => {
     const { data: students = [] } = useQuery({
         queryKey: ['students-mini'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/students', {
+            const { data } = await axios.get('/students', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -39,7 +39,7 @@ const Library = () => {
     })
 
     const addMutation = useMutation({
-        mutationFn: async (book) => axios.post('/api/library/add', book, {
+        mutationFn: async (book) => axios.post('/library/add', book, {
             headers: { Authorization: `Bearer ${token}` }
         }),
         onSuccess: () => {
@@ -51,7 +51,7 @@ const Library = () => {
     })
 
     const issueMutation = useMutation({
-        mutationFn: async (data) => axios.post('/api/library/issue', data, {
+        mutationFn: async (data) => axios.post('/library/issue', data, {
             headers: { Authorization: `Bearer ${token}` }
         }),
         onSuccess: () => {
@@ -65,7 +65,7 @@ const Library = () => {
     const { data: issues = [], isLoading: isIssuesLoading } = useQuery({
         queryKey: ['book-issues'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/library/issues', {
+            const { data } = await axios.get('/library/issues', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             return data
@@ -73,7 +73,7 @@ const Library = () => {
     })
 
     const returnMutation = useMutation({
-        mutationFn: async (issueId) => axios.post('/api/library/return', { issueId }, {
+        mutationFn: async (issueId) => axios.post('/library/return', { issueId }, {
             headers: { Authorization: `Bearer ${token}` }
         }),
         onSuccess: () => {

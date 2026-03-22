@@ -18,7 +18,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     
-    const url = isSignup ? '/api/auth/signup' : '/api/auth/login';
+    const url = isSignup ? '/auth/signup' : '/auth/login';
     const payload = isSignup 
       ? { name, email, password, schoolName } 
       : { email, password };
