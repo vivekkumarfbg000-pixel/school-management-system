@@ -1,6 +1,7 @@
 {
   "name": "edustream-saas",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix client\" \"npx nodemon server/server.js\"",
     "build": "npm run build --prefix client",
