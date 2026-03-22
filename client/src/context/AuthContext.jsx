@@ -10,18 +10,21 @@ axios.defaults.baseURL = API_BASE_URL;
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState('mock-token-for-dev');
+  const [user, setUser] = useState({
+    id: 'mock-admin-id',
+    name: 'Demo Admin',
+    email: 'admin@edustream.demo',
+    role: 'ADMIN',
+    school: 'EduStream Academy'
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
+    // Skip real token verification for now
+    axios.defaults.headers.common['Authorization'] = `Bearer mock-token-for-dev`;
     setLoading(false);
-  }, [token]);
+  }, []);
 
   const login = (newToken, newUser) => {
     localStorage.setItem('token', newToken);
