@@ -7,6 +7,13 @@ const API_BASE_URL = '/api';
 console.log('🌐 EduStream API Connection:', API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 
+// Add request interceptor to handle flat endpoints
+axios.interceptors.request.use(config => {
+  if (config.url === '/auth/login') config.url = '/login';
+  if (config.url === '/auth/signup') config.url = '/signup';
+  return config;
+});
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
