@@ -38,28 +38,28 @@ app.use(cors({
 app.use(express.json());
 
 // Main Entity Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/fees', feeRoutes);
-app.use('/api/academics', academicRoutes);
-app.use('/api/staff', staffRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/transport', transportRoutes);
-app.use('/api/library', libraryRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/export', exportRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/pay', payRoutes);
-app.use('/api/portal', portalRoutes);
+app.use('/server-api/auth', authRoutes);
+app.use('/server-api/students', studentRoutes);
+app.use('/server-api/attendance', attendanceRoutes);
+app.use('/server-api/fees', feeRoutes);
+app.use('/server-api/academics', academicRoutes);
+app.use('/server-api/staff', staffRoutes);
+app.use('/server-api/payroll', payrollRoutes);
+app.use('/server-api/timetable', timetableRoutes);
+app.use('/server-api/transport', transportRoutes);
+app.use('/server-api/library', libraryRoutes);
+app.use('/server-api/notifications', notificationRoutes);
+app.use('/server-api/dashboard', dashboardRoutes);
+app.use('/server-api/ai', aiRoutes);
+app.use('/server-api/search', searchRoutes);
+app.use('/server-api/export', exportRoutes);
+app.use('/server-api/reports', reportsRoutes);
+app.use('/server-api/settings', settingsRoutes);
+app.use('/server-api/pay', payRoutes);
+app.use('/server-api/portal', portalRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/server-api/health', (req, res) => {
   res.json({ status: 'EduStream SaaS API is running ✅', database: 'Supabase PostgreSQL' });
 });
 
