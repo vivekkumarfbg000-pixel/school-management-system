@@ -1,18 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "installCommand": "npm install && npm run postinstall",
-  "builds": [
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    },
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
