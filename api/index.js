@@ -1,4 +1,4 @@
-import app from '../server/server.js';
+import app from './server.js';
 
 // Vercel Serverless Functions often strip the /api prefix or pass it differently.
 // We export a handler that ensures the path is correctly prefixed so Express routing works.
