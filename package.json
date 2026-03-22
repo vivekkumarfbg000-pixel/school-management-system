@@ -3,19 +3,30 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"npx nodemon server/server.js\"",
+    "dev": "concurrently \"npm run dev --prefix client\" \"npx nodemon api/server.js\"",
     "build": "npm run build --prefix client",
-    "postinstall": "npm install --prefix client --legacy-peer-deps && npm install --prefix server --legacy-peer-deps"
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.4.2"
   },
   "dependencies": {
+    "@prisma/client": "^7.4.2",
     "@supabase/supabase-js": "^2.99.3",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dotenv": "^17.3.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.1.1",
     "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.18.0",
+    "pg": "^8.20.0",
+    "razorpay": "^2.9.6",
     "zod": "^4.3.6"
   }
 }

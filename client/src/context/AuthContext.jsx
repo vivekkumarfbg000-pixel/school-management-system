@@ -9,8 +9,9 @@ axios.defaults.baseURL = API_BASE_URL;
 
 // Add request interceptor to handle flat endpoints
 axios.interceptors.request.use(config => {
-  if (config.url === '/auth/login') config.url = '/login';
-  if (config.url === '/auth/signup') config.url = '/signup';
+  if (config.url.startsWith('/auth/')) {
+    config.url = config.url.replace('/auth/', '/');
+  }
   return config;
 });
 
