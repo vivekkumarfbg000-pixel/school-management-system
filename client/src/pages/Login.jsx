@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Mail, Lock, User, School, ArrowRight, Loader2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, School, ArrowRight, Loader2, Activity } from 'lucide-react';
 
 const Login = () => {
   const { login } = useAuth();
