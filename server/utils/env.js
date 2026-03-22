@@ -30,8 +30,11 @@ const sanitizeEnv = (data) => ({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('❌ Invalid environment variables:', parsed.error.format());
-  process.exit(1);
+  const errorMsg = '❌ Invalid environment variables: ' + JSON.stringify(parsed.error.format());
+  console.error(errorMsg);
+  // In serverless, we shouldn't call process.exit(1) as it might prevent logs from being captured.
+  // We'll throw an error instead, which Vercel will log as a function crash.
+  throw new Error(errorMsg);
 }
 
 export const env = sanitizeEnv(parsed.data);
