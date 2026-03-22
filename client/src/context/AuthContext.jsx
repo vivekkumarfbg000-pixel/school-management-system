@@ -3,17 +3,9 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Dynamic API Base URL Configuration
-const API_BASE_URL = '/api';
+const API_BASE_URL = '/server-api';
 console.log('🌐 EduStream API Connection:', API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
-
-// Add request interceptor to handle flat endpoints
-axios.interceptors.request.use(config => {
-  if (config.url.startsWith('/auth/')) {
-    config.url = config.url.replace('/auth/', '/');
-  }
-  return config;
-});
 
 const AuthContext = createContext(null);
 

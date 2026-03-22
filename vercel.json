@@ -1,22 +1,21 @@
 {
   "version": 2,
-  "public": true,
   "rewrites": [
     {
-      "source": "/api/login",
-      "destination": "/api/login.js"
+      "source": "/server-api/login",
+      "destination": "/server-api/login.js"
     },
     {
-      "source": "/api/signup",
-      "destination": "/api/signup.js"
+      "source": "/server-api/signup",
+      "destination": "/server-api/signup.js"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/all.js"
+      "source": "/server-api/(.*)",
+      "destination": "/server-api/all.js"
     },
     {
       "source": "/(.*)",
-      "destination": "/public/$1"
+      "destination": "/client/$1"
     }
   ]
 }
