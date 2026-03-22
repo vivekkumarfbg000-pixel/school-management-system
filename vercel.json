@@ -2,14 +2,6 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/auth/(.*)",
-      "destination": "/api/auth.js"
-    },
-    {
-      "source": "/api/health",
-      "destination": "/api/health.js"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/all.js"
     },
