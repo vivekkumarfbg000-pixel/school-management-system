@@ -6,6 +6,9 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../../.env') });
+if (!process.env.SUPABASE_URL) {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+}
 
 const envSchema = z.object({
   PORT: z.string().default('5000'),
