@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "public": true,
   "rewrites": [
     {
       "source": "/api/login",
@@ -15,7 +16,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/client/$1"
+      "destination": "/public/$1"
     }
   ]
 }
