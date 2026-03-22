@@ -27,7 +27,13 @@ const Login = () => {
       const { data } = await axios.post(url, payload);
       login(data.token, data.user);
     } catch (err) {
-      setError(err.response?.data?.message || 'Authentication failed. Please try again.');
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please ensure the backend is running.');
+      } else {
+        setError('Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
