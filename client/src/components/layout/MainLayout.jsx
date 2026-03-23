@@ -20,6 +20,7 @@ import {
   Search,
   Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AIChatBubble from '../ai/AIChatBubble';
 
 const MainLayout = ({ user, handleLogout }) => {
