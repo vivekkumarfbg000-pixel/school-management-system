@@ -1,7 +1,7 @@
-import app from './server.js';
+import app from '../server/server.js';
 
 export default function handler(req, res) {
-  // Normalize URL for consistency (supports both /api and legacy /server-api)
+  // Normalize URLs to /api for internal express routing
   if (req.url.startsWith('/server-api')) {
     req.url = req.url.replace('/server-api', '/api');
   }

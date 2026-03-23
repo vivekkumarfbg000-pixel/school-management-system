@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "install-all": "npm install && cd client && npm install",
-    "dev": "concurrently \"cd client && npm run dev\" \"npx nodemon server-api/server.js\"",
+    "dev": "concurrently \"cd client && npm run dev\" \"npx nodemon server/server.js\"",
     "build": "cd client && npm install && npm run build && rm -rf ../dist && mv dist ../dist",
     "postinstall": "prisma generate"
   },
