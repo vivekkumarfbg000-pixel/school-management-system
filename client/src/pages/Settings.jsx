@@ -36,6 +36,7 @@ const Settings = () => {
 
     useEffect(() => {
         if (school) {
+            // eslint-disable-next-line 
             setSchoolForm({
                 name: school.name || '',
                 address: school.address || '',

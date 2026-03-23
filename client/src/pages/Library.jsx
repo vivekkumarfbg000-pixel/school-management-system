@@ -62,7 +62,7 @@ const Library = () => {
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to issue book')
     })
 
-    const { data: issues = [], isLoading: isIssuesLoading } = useQuery({
+    const { data: issues = [] } = useQuery({
         queryKey: ['book-issues'],
         queryFn: async () => {
             const { data } = await axios.get('/library/issues', {

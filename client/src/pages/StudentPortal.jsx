@@ -1,8 +1,9 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion'
-import { User, Wallet, CheckCircle, Calendar, AlertCircle } from 'lucide-react'
+import { Wallet, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const StudentPortal = () => {

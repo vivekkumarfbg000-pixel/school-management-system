@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Mic, MicOff, X, Send, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import './AIChatBubble.css';
 
@@ -47,17 +48,6 @@ const AIChatBubble = () => {
     }
   }, []);
 
-  const toggleListening = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-    } else {
-      setTranscript('');
-      recognitionRef.current?.start();
-      setIsListening(true);
-    }
-  };
-
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
 
@@ -85,6 +75,18 @@ const AIChatBubble = () => {
       setMessages(prev => [...prev, { role: 'ai', text: "Uplink disrupted. Check network integrity." }]);
     }
   };
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      setTranscript('');
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
+
 
   return (
     <div className="ai-assistant-container">
