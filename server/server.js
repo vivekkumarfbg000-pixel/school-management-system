@@ -29,6 +29,14 @@ dotenv.config();
 
 const app = express();
 
+// Legacy path normalization
+app.use((req, res, next) => {
+  if (req.url.startsWith('/server-api')) {
+    req.url = req.url.replace('/server-api', '/api');
+  }
+  next();
+});
+
 // Middleware
 app.use(cors({
   origin: '*', // Allow all for now to debug, can be restricted later
