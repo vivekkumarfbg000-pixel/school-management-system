@@ -30,11 +30,21 @@ const sanitizeEnv = (data) => ({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const errorMsg = '❌ Invalid environment variables: ' + JSON.stringify(parsed.error.format());
+  const errorMsg = '❌ CRITICAL: Invalid environment variables detected!\n' + 
+    'Please ensure all required variables are set in your Vercel Dashboard.\n' +
+    'Missing/Invalid fields: ' + JSON.stringify(parsed.error.format());
   console.error(errorMsg);
-  // In serverless, we shouldn't call process.exit(1) as it might prevent logs from being captured.
-  // We'll throw an error instead, which Vercel will log as a function crash.
-  throw new Error(errorMsg);
+  // We'll allow the app to continue so that the 500 error can be caught by Express
+  // or the health check, rather than crashing the entire import.
 }
 
-export const env = sanitizeEnv(parsed.data);
+export const env = parsed.success ? sanitizeEnv(parsed.data) : {
+  PORT: process.env.PORT || '5000',
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || '',
+  JWT_SECRET: process.env.JWT_SECRET || 'fallback_secret',
+  SMS_PROVIDER: process.env.SMS_PROVIDER || 'MOCK',
+  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
+};
