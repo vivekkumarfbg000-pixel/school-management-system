@@ -29,16 +29,27 @@ dotenv.config();
 
 const app = express();
 
-// Legacy path normalization
+// Robust path normalization for Vercel & local environments
 app.use((req, res, next) => {
-  // Debug log for Vercel routing
-  if (process.env.DEBUG_ROUTING === 'true') {
-     console.log(`[Routing] Original URL: ${req.url}, Method: ${req.method}`);
+  const originalUrl = req.url;
+  
+  // 1. Remove common prefixes if they exist (to get the base path)
+  let cleanPath = req.url;
+  if (cleanPath.startsWith('/server-api')) {
+    cleanPath = cleanPath.substring(11);
+  } else if (cleanPath.startsWith('/api')) {
+    cleanPath = cleanPath.substring(4);
   }
-
-  if (req.url.startsWith('/server-api')) {
-    req.url = req.url.replace('/server-api', '/api');
+  
+  // 2. Ensure the path is prefixed with /api for internal express routing consistency
+  // All our routes are defined with app.use('/api/xxx', ...)
+  req.url = '/api' + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
+  
+  // Debug log for production (visible in Vercel logs)
+  if (originalUrl !== req.url || process.env.NODE_ENV === 'production') {
+     console.log(`[Routing] ${req.method} ${originalUrl} -> ${req.url}`);
   }
+  
   next();
 });
 
