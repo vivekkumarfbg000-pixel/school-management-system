@@ -19,9 +19,10 @@ const Login = () => {
     setError('');
     
     const url = isSignup ? '/auth/signup' : '/auth/login';
+    const cleanEmail = email.trim().toLowerCase();
     const payload = isSignup 
-      ? { name, email, password, schoolName } 
-      : { email, password };
+      ? { name, email: cleanEmail, password, schoolName } 
+      : { email: cleanEmail, password };
 
     try {
       const { data } = await axios.post(url, payload);

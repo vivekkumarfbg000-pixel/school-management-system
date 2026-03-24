@@ -17,7 +17,12 @@ router.post('/login', async (req, res) => {
       .eq('email', email)
       .limit(1);
 
-    if (error || !users || users.length === 0) {
+    if (error) {
+      console.error('Supabase Login Error:', error);
+      return res.status(500).json({ message: 'Database error', error: error.message });
+    }
+
+    if (!users || users.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
