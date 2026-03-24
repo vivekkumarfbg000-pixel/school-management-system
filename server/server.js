@@ -31,6 +31,11 @@ const app = express();
 
 // Legacy path normalization
 app.use((req, res, next) => {
+  // Debug log for Vercel routing
+  if (process.env.DEBUG_ROUTING === 'true') {
+     console.log(`[Routing] Original URL: ${req.url}, Method: ${req.method}`);
+  }
+
   if (req.url.startsWith('/server-api')) {
     req.url = req.url.replace('/server-api', '/api');
   }
