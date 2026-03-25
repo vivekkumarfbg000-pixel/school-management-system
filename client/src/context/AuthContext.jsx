@@ -3,8 +3,24 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Dynamic API Base URL Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-console.log('🌐 EduStream API Connection:', API_BASE_URL);
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  
+  // If the env URL matches the current origin, use relative path to avoid CORS entirely
+  try {
+    const url = new URL(envUrl);
+    if (url.origin === window.location.origin) {
+      return '/api';
+    }
+    return envUrl;
+  } catch (e) {
+    return envUrl; // Fallback if not a valid URL (e.g. just a path)
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
+console.log(`🌐 EduStream API (${API_BASE_URL.startsWith('http') ? 'Cross-Origin' : 'Relative'}):`, API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 
 const AuthContext = createContext(null);

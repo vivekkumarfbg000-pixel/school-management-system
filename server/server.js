@@ -57,12 +57,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware
+// 2. CORS Middleware - MUST BE BEFORE OTHER MIDDLEWARE FOR PREFLIGHTS
 app.use(cors({
-  origin: '*', // Allow all for now to debug, can be restricted later
+  origin: '*', // Allow all for now to debug
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
+
+// 3. Body Parser
 app.use(express.json());
 
 // Main Entity Routes
