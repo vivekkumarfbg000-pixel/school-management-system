@@ -16,7 +16,7 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|server-api).*)",
       "destination": "/dist/$1"
     }
   ]

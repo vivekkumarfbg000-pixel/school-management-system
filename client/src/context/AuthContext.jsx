@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Dynamic API Base URL Configuration
-const API_BASE_URL = '/server-api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 console.log('🌐 EduStream API Connection:', API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 

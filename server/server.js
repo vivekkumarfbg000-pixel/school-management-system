@@ -41,17 +41,16 @@ app.use((req, res, next) => {
     cleanPath = cleanPath.substring(4);
   }
   
-  // 3. Special handling for diagnostic tools that hit /api/login or /api/signup directly
-  // We normalize these to /api/auth/login or /api/auth/signup
-  if (cleanPath === '/login' || cleanPath === '/signup') {
-    cleanPath = '/auth' + cleanPath;
+  // 2. Remove common internal remappings if they exist
+  if (cleanPath.startsWith('/index.js')) {
+    cleanPath = cleanPath.substring(9);
   }
-
-  // 4. Ensure the path is prefixed with /api for internal express routing consistency
-  req.url = '/api' + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
+  
+  // 3. Normalize purely to the resource path
+  req.url = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
   
   // Debug log for production (visible in Vercel logs)
-  if (originalUrl !== req.url || process.env.NODE_ENV === 'production') {
+  if (originalUrl !== req.url && process.env.NODE_ENV === 'production') {
      console.log(`[Routing] ${req.method} ${originalUrl} -> ${req.url}`);
   }
   
@@ -67,25 +66,31 @@ app.use(cors({
 app.use(express.json());
 
 // Main Entity Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/fees', feeRoutes);
-app.use('/api/academics', academicRoutes);
-app.use('/api/staff', staffRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/transport', transportRoutes);
-app.use('/api/library', libraryRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/export', exportRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/pay', payRoutes);
-app.use('/api/portal', portalRoutes);
+// Supporting both /api/auth AND /auth for maximum deployment flexibility
+const registerRoute = (path, router) => {
+  app.use(path, router);
+  app.use('/api' + path, router);
+};
+
+registerRoute('/auth', authRoutes);
+registerRoute('/students', studentRoutes);
+registerRoute('/attendance', attendanceRoutes);
+registerRoute('/fees', feeRoutes);
+registerRoute('/academics', academicRoutes);
+registerRoute('/staff', staffRoutes);
+registerRoute('/payroll', payrollRoutes);
+registerRoute('/timetable', timetableRoutes);
+registerRoute('/transport', transportRoutes);
+registerRoute('/library', libraryRoutes);
+registerRoute('/notifications', notificationRoutes);
+registerRoute('/dashboard', dashboardRoutes);
+registerRoute('/ai', aiRoutes);
+registerRoute('/search', searchRoutes);
+registerRoute('/export', exportRoutes);
+registerRoute('/reports', reportsRoutes);
+registerRoute('/settings', settingsRoutes);
+registerRoute('/pay', payRoutes);
+registerRoute('/portal', portalRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
