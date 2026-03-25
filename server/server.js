@@ -64,6 +64,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
+app.options('*', cors()); // Enable pre-flight for all routes
 
 // 3. Body Parser
 app.use(express.json());
