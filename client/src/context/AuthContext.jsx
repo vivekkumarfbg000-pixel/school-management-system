@@ -31,7 +31,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    toast.success(`Welcome back, ${newUser.name.split(' ')[0]}!`);
+    const firstName = newUser?.name ? newUser.name.split(' ')[0] : 'User';
+    toast.success(`Welcome back, ${firstName}!`);
   };
 
   const logout = () => {

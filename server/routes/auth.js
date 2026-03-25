@@ -38,6 +38,11 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' }
     );
 
+    // Handle Supabase join result (which can be an object or a single-item array)
+    const schoolName = Array.isArray(user.schools) 
+      ? user.schools[0]?.name 
+      : (user.schools?.name || 'EduStream Institution');
+
     res.json({
       token,
       user: {
@@ -45,7 +50,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        school: user.schools?.name
+        school: schoolName
       }
     });
   } catch (error) {
@@ -105,11 +110,11 @@ router.post('/signup', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Signup Error Detailed:', error);
     if (error.code === '23505') {
-       return res.status(400).json({ message: 'Email already exists' });
+       return res.status(400).json({ message: 'Email or Institution name already exists' });
     }
-    res.status(500).json({ message: 'Server error during signup' });
+    res.status(500).json({ message: `Server error during signup: ${error.message || 'Unknown error'}` });
   }
 });
 

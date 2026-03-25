@@ -41,8 +41,13 @@ app.use((req, res, next) => {
     cleanPath = cleanPath.substring(4);
   }
   
-  // 2. Ensure the path is prefixed with /api for internal express routing consistency
-  // All our routes are defined with app.use('/api/xxx', ...)
+  // 3. Special handling for diagnostic tools that hit /api/login or /api/signup directly
+  // We normalize these to /api/auth/login or /api/auth/signup
+  if (cleanPath === '/login' || cleanPath === '/signup') {
+    cleanPath = '/auth' + cleanPath;
+  }
+
+  // 4. Ensure the path is prefixed with /api for internal express routing consistency
   req.url = '/api' + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
   
   // Debug log for production (visible in Vercel logs)
