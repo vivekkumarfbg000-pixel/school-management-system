@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import supabase from '../utils/supabaseClient.js';
 
 export const protect = (req, res, next) => {
   let token;
@@ -9,24 +8,26 @@ export const protect = (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-
-      // Add user to request
       req.user = decoded;
-
-      next();
+      return next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized' });
+      console.error('[Auth] Token verification failed:', error.message);
+
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Session expired. Please login again.', code: 'TOKEN_EXPIRED' });
+      }
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({ message: 'Invalid token. Please login again.', code: 'TOKEN_INVALID' });
+      }
+      return res.status(401).json({ message: 'Not authorized', code: 'AUTH_FAILED' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ message: 'Not authorized, no token provided', code: 'NO_TOKEN' });
   }
 };
 
@@ -48,12 +49,12 @@ export const requireClassOwnership = () => {
         return next();
       }
 
-      // TEACHER Role Validation
       let targetClass = req.body.className || req.query.className;
       let targetSection = req.body.section || req.query.section;
 
       if (!targetClass && req.body.records && req.body.records.length > 0) {
-        // Infer class from the first student in the batch
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = (await import('../utils/supabaseClient.js')).default;
         const firstStudentId = req.body.records[0].studentId || req.body.records[0].student_id;
         const { data: st } = await supabase.from('students').select('class_name, section').eq('id', firstStudentId).single();
         if (st) {
@@ -66,7 +67,6 @@ export const requireClassOwnership = () => {
         return res.status(400).json({ message: 'Class scope cannot be determined for RBAC.' });
       }
 
-      // Simulation: In full production, we cross-reference req.user with the `timetable_slots` to ensure this Teacher teaches this Class & Section.
       console.log(`[RBAC] Validated Teacher Class Scope: ${targetClass}-${targetSection}`);
       next();
     } catch (err) {

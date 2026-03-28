@@ -69,6 +69,18 @@ app.options('*', cors()); // Enable pre-flight for all routes
 // 3. Body Parser
 app.use(express.json());
 
+// 4. Request Logging (Production debugging)
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.url !== '/api/health' && duration > 100) {
+      console.log(`[API] ${req.method} ${req.url} → ${res.statusCode} (${duration}ms)`);
+    }
+  });
+  next();
+});
+
 // Main Entity Routes
 // Supporting both /api/auth AND /auth for maximum deployment flexibility
 const registerRoute = (path, router) => {

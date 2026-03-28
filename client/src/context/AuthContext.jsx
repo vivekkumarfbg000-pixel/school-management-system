@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -7,7 +7,6 @@ const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (!envUrl) return '/api';
   
-  // If the env URL matches the current origin, use relative path to avoid CORS entirely
   try {
     const url = new URL(envUrl);
     if (url.origin === window.location.origin) {
@@ -15,7 +14,7 @@ const getApiBaseUrl = () => {
     }
     return envUrl;
   } catch (e) {
-    return envUrl; // Fallback if not a valid URL (e.g. just a path)
+    return envUrl;
   }
 };
 
@@ -23,16 +22,65 @@ const API_BASE_URL = getApiBaseUrl();
 console.log(`🌐 EduStream API (${API_BASE_URL.startsWith('http') ? 'Cross-Origin' : 'Relative'}):`, API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 
+// ── JWT Helpers ──
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpired = (token) => {
+  const payload = parseJwt(token);
+  if (!payload?.exp) return true;
+  // Add 10 second buffer
+  return Date.now() >= (payload.exp * 1000) - 10000;
+};
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [token, setToken] = useState(() => {
+    const saved = localStorage.getItem('token');
+    // Auto-clear expired tokens on load
+    if (saved && isTokenExpired(saved)) {
+      console.log('[Auth] Token expired on load, clearing...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return null;
+    }
+    return saved || null;
+  });
+
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      localStorage.removeItem('user');
+      return null;
+    }
   });
+
   const [loading, setLoading] = useState(false);
 
+  const logout = useCallback((message) => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+    if (message) {
+      toast.error(message, { duration: 4000 });
+    } else {
+      toast.success('Logged out successfully');
+    }
+  }, []);
+
+  // Set up auth header & 401 interceptor
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -41,6 +89,40 @@ export const AuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, [token]);
+
+  // ── Axios 401 Interceptor (auto-logout on expired token) ──
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401 && token) {
+          const code = error.response?.data?.code;
+          if (code === 'TOKEN_EXPIRED') {
+            logout('Session expired. Please login again.');
+          } else if (code === 'TOKEN_INVALID' || code === 'NO_TOKEN') {
+            logout('Authentication failed. Please login again.');
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [token, logout]);
+
+  // ── Check token expiry on window focus ──
+  useEffect(() => {
+    const handleFocus = () => {
+      if (token && isTokenExpired(token)) {
+        logout('Session expired. Please login again.');
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [token, logout]);
 
   const login = (newToken, newUser) => {
     localStorage.setItem('token', newToken);
@@ -51,16 +133,8 @@ export const AuthProvider = ({ children }) => {
     toast.success(`Welcome back, ${firstName}!`);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-    toast.success('Logged out successfully');
-  };
-
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ token, user, login, logout, loading, isAuthenticated: !!token }}>
       {!loading && children}
     </AuthContext.Provider>
   );
