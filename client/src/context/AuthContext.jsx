@@ -19,8 +19,9 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-console.log(`🌐 EduStream API (${API_BASE_URL.startsWith('http') ? 'Cross-Origin' : 'Relative'}):`, API_BASE_URL);
-axios.defaults.baseURL = API_BASE_URL;
+const finalBaseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
+console.log(`🌐 EduStream API (${finalBaseUrl.startsWith('http') ? 'Cross-Origin' : 'Relative'}):`, finalBaseUrl);
+axios.defaults.baseURL = finalBaseUrl;
 
 // ── JWT Helpers ──
 const parseJwt = (token) => {

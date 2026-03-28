@@ -36,7 +36,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     
-    const url = isSignup ? '/auth/signup' : '/auth/login';
+    const url = isSignup ? 'auth/signup' : 'auth/login';
     const cleanEmail = email.trim().toLowerCase();
     const payload = isSignup 
       ? { name: name.trim(), email: cleanEmail, password, schoolName: schoolName.trim() } 
