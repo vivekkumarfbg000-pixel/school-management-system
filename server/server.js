@@ -59,12 +59,12 @@ app.use((req, res, next) => {
 
 // 2. CORS Middleware - MUST BE BEFORE OTHER MIDDLEWARE FOR PREFLIGHTS
 app.use(cors({
-  origin: '*', // Allow all for now to debug
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
-app.options('*', cors()); // Enable pre-flight for all routes
 
 // 3. Body Parser
 app.use(express.json());

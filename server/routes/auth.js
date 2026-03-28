@@ -26,7 +26,7 @@ router.post('/login', async (req, res) => {
   // Validate input
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    const firstError = parsed.error.errors[0]?.message || 'Invalid input';
+    const firstError = parsed.error.issues[0]?.message || 'Invalid input';
     return res.status(400).json({ message: firstError });
   }
 
@@ -86,7 +86,7 @@ router.post('/signup', async (req, res) => {
   // Validate input
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) {
-    const firstError = parsed.error.errors[0]?.message || 'Invalid input';
+    const firstError = parsed.error.issues[0]?.message || 'Invalid input';
     return res.status(400).json({ message: firstError });
   }
 
