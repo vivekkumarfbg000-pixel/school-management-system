@@ -10,7 +10,8 @@ export const protect = (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+      const SAFE_SECRET = process.env.JWT_SECRET || 'development_fallback_secret';
+      const decoded = jwt.verify(token, SAFE_SECRET);
       req.user = decoded;
       return next();
     } catch (error) {

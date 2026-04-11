@@ -125,6 +125,15 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('focus', handleFocus);
   }, [token, logout]);
 
+  const checkServer = async () => {
+    try {
+      await axios.get('health'); // Targets /api/health due to baseURL
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const login = (newToken, newUser) => {
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
@@ -135,7 +144,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, loading, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ token, user, login, logout, checkServer, loading, isAuthenticated: !!token }}>
       {!loading && children}
     </AuthContext.Provider>
   );

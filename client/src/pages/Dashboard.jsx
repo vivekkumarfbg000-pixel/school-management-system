@@ -12,7 +12,7 @@ import {
   Users, Wallet, ArrowUpRight, TrendingUp, Activity,
   Loader2, Sparkles, CheckCircle, ArrowRight, Clock, AlertTriangle,
   BookOpen, Calendar, Plus, FileText, UserPlus, CreditCard,
-  ClipboardCheck, BarChart3, Library, Bell
+  ClipboardCheck, BarChart3, Library, Bell, RefreshCw
 } from 'lucide-react'
 
 // Chart Colors 
@@ -22,7 +22,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const { user, token } = useAuth()
 
-  const { data: dashData, isLoading, error: dashError } = useQuery({
+  const { data: dashData, isLoading, error: dashError, refetch } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const { data } = await axios.get('dashboard/stats', {
@@ -93,6 +93,24 @@ const Dashboard = () => {
     { icon: <ClipboardCheck size={20} />, label: 'Mark Attendance', path: '/attendance', color: 'amber' },
     { icon: <FileText size={20} />, label: 'Generate Report', path: '/reports', color: 'blue' },
   ]
+
+  // ── Error State ──
+  if (dashError) {
+    return (
+      <div className="dashboard-v3" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <div className="card glass-card" style={{ textAlign: 'center', padding: '3rem', maxWidth: '500px' }}>
+          <AlertTriangle size={48} className="text-danger" style={{ marginBottom: '1rem', color: 'var(--danger)' }} />
+          <h2>Dashboard Offline</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+            We couldn't load your school's analytics. This might be due to a network connectivity error or a temporary server timeout.
+          </p>
+          <button onClick={() => refetch()} className="login-btn" style={{ width: 'auto', display: 'inline-flex', gap: '8px', padding: '0.75rem 1.5rem', margin: '0 auto' }}>
+            <RefreshCw size={18} /> Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Onboarding Empty State ──
   if (isNewSchool) {
@@ -184,8 +202,8 @@ const Dashboard = () => {
           <div className="stat-icon green"><CheckCircle size={24} /></div>
           <div className="stat-value">{isLoading ? <span className="stat-skeleton" /> : `${dashData?.stats?.attendanceRate ?? 0}%`}</div>
           <div className="stat-label">Today's Attendance</div>
-          <div className="stat-trend-indicator" style={ dashData?.stats?.attendanceRate < 90 ? { background: 'rgba(239,68,68,0.1)', color: 'var(--danger)' } : {}}>
-            {dashData?.stats?.attendanceRate < 90 ? 'Below threshold' : 'Healthy'}
+          <div className="stat-trend-indicator" style={ (dashData?.stats?.attendanceRate ?? 0) < 90 ? { background: 'rgba(239,68,68,0.1)', color: 'var(--danger)' } : {}}>
+            {(dashData?.stats?.attendanceRate ?? 0) < 90 ? 'Below threshold' : 'Healthy'}
           </div>
         </div>
         <div className="stat-card">

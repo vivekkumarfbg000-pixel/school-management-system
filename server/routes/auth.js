@@ -3,10 +3,22 @@ const router = express.Router();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import supabase from '../utils/supabaseClient.js';
 import { protect } from '../middleware/auth.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL ERROR: JWT_SECRET is not defined in production environment.');
+  process.exit(1);
+}
+const SAFE_SECRET = JWT_SECRET || 'development_fallback_secret';
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 20, 
+  message: { message: 'Too many authentication attempts from this IP, please try again after 15 minutes' }
+});
 
 // ── Input Validation Schemas ──
 const loginSchema = z.object({
@@ -19,10 +31,11 @@ const signupSchema = z.object({
   email: z.string().email('Invalid email format'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(128),
   schoolName: z.string().min(2, 'School name must be at least 2 characters').max(200),
+  phone: z.string().max(20).optional().default('0000000000'),
 });
 
 // @route   POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   // Validate input
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -56,7 +69,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email, username: user.username, role: user.role, schoolId: user.school_id },
-      JWT_SECRET,
+      SAFE_SECRET,
       { expiresIn: '30d' }
     );
 
@@ -82,7 +95,7 @@ router.post('/login', async (req, res) => {
 });
 
 // @route   POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   // Validate input
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -90,7 +103,7 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ message: firstError });
   }
 
-  const { name, email, password, schoolName } = parsed.data;
+  const { name, email, password, schoolName, phone } = parsed.data;
   
   try {
     // 1. Check if email already exists
@@ -107,7 +120,7 @@ router.post('/signup', async (req, res) => {
     // 2. Create the school first
     const { data: school, error: sErr } = await supabase
       .from('schools')
-      .insert([{ name: schoolName.trim(), address: 'Update Address', phone: '0000000000' }])
+      .insert([{ name: schoolName.trim(), address: 'Not Provided', phone: phone.trim() }])
       .select()
       .single();
 
@@ -130,12 +143,16 @@ router.post('/signup', async (req, res) => {
       .select('id, email, username, password, role, name, school_id')
       .single();
 
-    if (uErr) throw uErr;
+    if (uErr) {
+      // Rollback school creation on error to prevent orphan records
+      await supabase.from('schools').delete().eq('id', school.id);
+      throw uErr;
+    }
 
     // 5. Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email, username: user.username, role: user.role, schoolId: school.id },
-      JWT_SECRET,
+      SAFE_SECRET,
       { expiresIn: '30d' }
     );
 

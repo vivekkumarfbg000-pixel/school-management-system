@@ -1,18 +1,33 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Mail, Lock, User, School, ArrowRight, Loader2, Activity, Eye, EyeOff, Shield, Zap, BarChart3, Users } from 'lucide-react';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, checkServer } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('remember_email') || '');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [schoolName, setSchoolName] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remember_email'));
+  const [serverStatus, setServerStatus] = useState('checking'); // 'online', 'offline', 'checking'
+  const [showForgotModal, setShowForgotModal] = useState(false);
+
+  // Connectivity Pulse
+  useEffect(() => {
+    const pulse = async () => {
+      const isOnline = await checkServer();
+      setServerStatus(isOnline ? 'online' : 'offline');
+    };
+    pulse();
+    const interval = setInterval(pulse, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, [checkServer]);
 
   // Password strength calculation
   const passwordStrength = useMemo(() => {
@@ -36,10 +51,17 @@ const Login = () => {
     setLoading(true);
     setError('');
     
+    // Persist email if Remember Me is checked
+    if (rememberMe) {
+      localStorage.setItem('remember_email', email);
+    } else {
+      localStorage.removeItem('remember_email');
+    }
+
     const url = isSignup ? 'auth/signup' : 'auth/login';
     const cleanEmail = email.trim().toLowerCase();
     const payload = isSignup 
-      ? { name: name.trim(), email: cleanEmail, password, schoolName: schoolName.trim() } 
+      ? { name: name.trim(), email: cleanEmail, password, schoolName: schoolName.trim(), phone: phone.trim() } 
       : { email: cleanEmail, password };
 
     try {
@@ -50,6 +72,7 @@ const Login = () => {
         setError(err.response.data.message);
       } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
         setError('Cannot connect to server. Please ensure the backend is running.');
+        setServerStatus('offline');
       } else {
         setError('Authentication failed. Please try again.');
       }
@@ -67,6 +90,26 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="modal-overlay fade-in" onClick={() => setShowForgotModal(false)}>
+          <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <Shield size={32} color="var(--primary)" />
+              <h2>Reset Access</h2>
+            </div>
+            <p>For security reasons, password resets must be initiated by your school administrator.</p>
+            <div className="contact-info">
+              <div className="info-item">
+                <span className="info-label">Support Email</span>
+                <span className="info-value">admin-access@edustream.io</span>
+              </div>
+            </div>
+            <button className="login-btn" onClick={() => setShowForgotModal(false)}>Got It</button>
+          </div>
+        </div>
+      )}
+
       <div className="login-backdrop">
         <div className="glow glow-1"></div>
         <div className="glow glow-2"></div>
@@ -80,6 +123,7 @@ const Login = () => {
           <div className="branding-content">
             <div className="brand-logo">
               <Sparkles size={28} color="white" />
+              <div className={`status-pulse ${serverStatus}`}></div>
             </div>
             <h2>EduStream</h2>
             <p className="tagline">The complete school operating system — powered by AI</p>
@@ -96,8 +140,9 @@ const Login = () => {
               ))}
             </div>
 
-            <div className="trusted-badge">
-              <span>Trusted by 500+ institutions across India</span>
+            <div className="system-status-pill">
+              <Activity size={12} />
+              <span>System: <b>{serverStatus.toUpperCase()}</b></span>
             </div>
           </div>
         </div>
@@ -115,6 +160,7 @@ const Login = () => {
               <span>{error}</span>
             </div>
           )}
+
 
           <form onSubmit={handleSubmit} className="login-form">
             {isSignup && (
@@ -138,6 +184,17 @@ const Login = () => {
                     value={schoolName} 
                     onChange={e => setSchoolName(e.target.value)} 
                     placeholder="Saint Paul Academy"
+                    required 
+                  />
+                </div>
+                <div className="form-group">
+                  <label><Activity size={14} /> School Phone</label>
+                  <input 
+                    id="signup-phone"
+                    type="tel" 
+                    value={phone} 
+                    onChange={e => setPhone(e.target.value)} 
+                    placeholder="1234567890"
                     required 
                   />
                 </div>
@@ -193,6 +250,26 @@ const Login = () => {
                     {passwordStrength.label}
                   </span>
                 </div>
+              )}
+            </div>
+
+            <div className="form-options">
+              <label className="remember-me">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe} 
+                  onChange={e => setRememberMe(e.target.checked)} 
+                />
+                <span>Remember me</span>
+              </label>
+              {!isSignup && (
+                <button 
+                  type="button" 
+                  className="forgot-password-link"
+                  onClick={() => setShowForgotModal(true)}
+                >
+                  Forgot Password?
+                </button>
               )}
             </div>
 
