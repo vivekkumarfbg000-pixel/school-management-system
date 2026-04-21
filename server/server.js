@@ -28,6 +28,8 @@ import portalRoutes from './routes/portal.js';
 import remindersRoutes from './routes/reminders.js';
 import enquiriesRoutes from './routes/enquiries.js';
 import expensesRoutes from './routes/expenses.js';
+import visitorsRoutes from './routes/visitors.js';
+import bulkRoutes from './routes/bulk.js';
 
 dotenv.config();
 
@@ -127,6 +129,8 @@ registerRoute('/portal', portalRoutes);
 registerRoute('/reminders', remindersRoutes);
 registerRoute('/enquiries', enquiriesRoutes);
 registerRoute('/expenses', expensesRoutes);
+registerRoute('/visitors', visitorsRoutes);
+registerRoute('/bulk', bulkRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
