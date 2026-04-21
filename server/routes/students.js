@@ -84,4 +84,19 @@ router.delete('/:id', protect, asyncHandler(async (req, res) => {
   res.json({ message: 'Student removed successfully' });
 }));
 
+// PUT /api/students/:id
+router.put('/:id', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (req, res) => {
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('students')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  res.json(data);
+}));
+
 export default router;

@@ -115,7 +115,7 @@ router.get('/stats', protect, asyncHandler(async (req, res) => {
       const todayDay = dayNames[new Date().getDay()];
       const { data } = await supabase
         .from('timetable_slots')
-        .select('subject, class_name, section, start_time, end_time, teacher_name')
+        .select('subject, class_name, section, start_time, end_time, staff(name)')
         .eq('school_id', schoolId)
         .eq('day', todayDay)
         .order('start_time', { ascending: true })
@@ -181,7 +181,7 @@ router.get('/stats', protect, asyncHandler(async (req, res) => {
       subject: e.subject,
       class: `${e.class_name}-${e.section}`,
       time: `${e.start_time} - ${e.end_time}`,
-      teacher: e.teacher_name || 'TBA'
+      teacher: e.staff?.name || 'TBA'
     })),
     pendingTasks: {
       unpaidFees: pendingFeesCount,

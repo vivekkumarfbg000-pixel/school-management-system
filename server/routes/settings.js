@@ -78,4 +78,52 @@ router.post('/sessions', protect, authorize('ADMIN'), asyncHandler(async (req, r
   res.status(201).json(data);
 }));
 
+// GET /api/settings/fee-structures
+router.get('/fee-structures', protect, asyncHandler(async (req, res) => {
+  const { data, error } = await supabase
+    .from('fee_structures')
+    .select('*')
+    .eq('school_id', req.user.schoolId)
+    .order('class_name');
+  if (error) throw error;
+  res.json(data || []);
+}));
+
+// POST /api/settings/fee-structures
+router.post('/fee-structures', protect, authorize('ADMIN'), asyncHandler(async (req, res) => {
+  const { class_name, fee_type, amount, cycle } = req.body;
+  const { data, error } = await supabase
+    .from('fee_structures')
+    .insert([{ class_name, fee_type, amount: parseFloat(amount), cycle, school_id: req.user.schoolId }])
+    .select()
+    .single();
+  if (error) throw error;
+  res.status(201).json(data);
+}));
+
+// PUT /api/settings/fee-structures/:id
+router.put('/fee-structures/:id', protect, authorize('ADMIN'), asyncHandler(async (req, res) => {
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('fee_structures')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId)
+    .select()
+    .single();
+  if (error) throw error;
+  res.json(data);
+}));
+
+// DELETE /api/settings/fee-structures/:id
+router.delete('/fee-structures/:id', protect, authorize('ADMIN'), asyncHandler(async (req, res) => {
+  const { error } = await supabase
+    .from('fee_structures')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId);
+  if (error) throw error;
+  res.json({ message: 'Fee structure deleted successfully' });
+}));
+
 export default router;

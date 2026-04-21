@@ -95,8 +95,11 @@ router.post('/generate', protect, authorize('ADMIN', 'ACCOUNTANT'), asyncHandler
 
   // Trigger SMS for Fee Billing
   try {
-    const msg = `Dear Parent, a new fee bill (₹${amount}) has been generated for your child. Due date: ${dueDate}. Please pay timely to avoid late fees.`;
-    sendSMS('91XXXXXXXXXX', msg);
+    const { data: student } = await supabase.from('students').select('phone').eq('id', studentId).single();
+    if (student && student.phone) {
+      const msg = `Dear Parent, a new fee bill (₹${amount}) has been generated for your child. Due date: ${dueDate}. Please pay timely to avoid late fees.`;
+      sendSMS(student.phone, msg);
+    }
   } catch (smsErr) {
     console.error("SMS notification failed", smsErr);
   }

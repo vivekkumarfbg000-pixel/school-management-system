@@ -78,4 +78,21 @@ router.get('/toppers', protect, asyncHandler(async (req, res) => {
   res.json(toppers);
 }));
 
+// POST /api/academics/marks
+router.post('/marks', protect, authorize('ADMIN', 'PRINCIPAL', 'STAFF'), asyncHandler(async (req, res) => {
+  const { marks } = req.body; 
+  
+  if (!Array.isArray(marks) || marks.length === 0) {
+    return res.status(400).json({ message: 'Marks array is required' });
+  }
+
+  const { data, error } = await supabase
+    .from('exam_marks')
+    .insert(marks)
+    .select();
+
+  if (error) throw error;
+  res.status(201).json(data);
+}));
+
 export default router;

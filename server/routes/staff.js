@@ -53,4 +53,19 @@ router.delete('/:id', protect, asyncHandler(async (req, res) => {
   res.json({ message: 'Staff record updated to inactive' });
 }));
 
+// PUT /api/staff/:id
+router.put('/:id', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(async (req, res) => {
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('staff')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  res.json(data);
+}));
+
 export default router;

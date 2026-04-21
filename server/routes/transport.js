@@ -70,4 +70,31 @@ router.post('/assign', protect, asyncHandler(async (req, res) => {
   res.json({ message: 'Student assigned to vehicle successfully' });
 }));
 
+// PUT /api/transport/vehicles/:id
+router.put('/vehicles/:id', protect, asyncHandler(async (req, res) => {
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('vehicles')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  res.json(data);
+}));
+
+// DELETE /api/transport/vehicles/:id
+router.delete('/vehicles/:id', protect, asyncHandler(async (req, res) => {
+  const { error } = await supabase
+    .from('vehicles')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId);
+
+  if (error) throw error;
+  res.json({ message: 'Vehicle deleted successfully' });
+}));
+
 export default router;

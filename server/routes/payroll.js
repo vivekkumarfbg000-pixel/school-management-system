@@ -44,9 +44,18 @@ router.post('/generate', protect, authorize('ADMIN', 'ACCOUNTANT'), asyncHandler
   }
 
   // Count absent days for the month
-  const [year, mon] = month.split(' ').length > 1 
-    ? [null, null] // "March 2026" format
-    : [null, null];
+  let startOfMonth, endOfMonth;
+  if (month.includes('-')) {
+    // Format "YYYY-MM"
+    const [year, mon] = month.split('-');
+    startOfMonth = `${year}-${mon}-01`;
+    endOfMonth = new Date(parseInt(year), parseInt(mon), 0).toISOString().split('T')[0];
+  } else {
+    // Format "Month YYYY" e.g. "March 2026"
+    const dateObj = new Date(month + " 1");
+    startOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString().split('T')[0];
+    endOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).toISOString().split('T')[0];
+  }
 
   // Try to get absent days from staff attendance for this month
   let absentDays = 0;
@@ -55,7 +64,9 @@ router.post('/generate', protect, authorize('ADMIN', 'ACCOUNTANT'), asyncHandler
       .from('staff_attendance')
       .select('id')
       .eq('staff_id', staffId)
-      .eq('status', 'Absent');
+      .eq('status', 'Absent')
+      .gte('date', startOfMonth)
+      .lte('date', endOfMonth);
     absentDays = absences ? absences.length : 0;
   } catch (e) {
     // If table doesn't exist or error, default to 0

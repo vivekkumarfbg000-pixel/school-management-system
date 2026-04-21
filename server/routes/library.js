@@ -122,4 +122,31 @@ router.get('/issues', protect, asyncHandler(async (req, res) => {
   res.json(data);
 }));
 
+// PUT /api/library/books/:id
+router.put('/books/:id', protect, asyncHandler(async (req, res) => {
+  const updates = req.body;
+  const { data, error } = await supabase
+    .from('books')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  res.json(data);
+}));
+
+// DELETE /api/library/books/:id
+router.delete('/books/:id', protect, asyncHandler(async (req, res) => {
+  const { error } = await supabase
+    .from('books')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('school_id', req.user.schoolId);
+
+  if (error) throw error;
+  res.json({ message: 'Book deleted successfully' });
+}));
+
 export default router;
