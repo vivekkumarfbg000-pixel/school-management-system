@@ -18,6 +18,8 @@ import Library from './pages/Library'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import AIStudio from './pages/AIStudio'
+import Enquiries from './pages/Enquiries'
+import Expenses from './pages/Expenses'
 import Login from './pages/Login'
 
 const App = () => {
@@ -63,6 +65,9 @@ const App = () => {
         <Route path="/library" element={<Library />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        {/* Phase 1 — New Pages */}
+        <Route path="/enquiries" element={<Enquiries />} />
+        <Route path="/expenses" element={<Expenses />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

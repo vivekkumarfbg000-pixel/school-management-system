@@ -24,6 +24,10 @@ import reportsRoutes from './routes/reports.js';
 import settingsRoutes from './routes/settings.js';
 import payRoutes from './routes/pay.js';
 import portalRoutes from './routes/portal.js';
+// Phase 1 — New Routes
+import remindersRoutes from './routes/reminders.js';
+import enquiriesRoutes from './routes/enquiries.js';
+import expensesRoutes from './routes/expenses.js';
 
 dotenv.config();
 
@@ -119,6 +123,10 @@ registerRoute('/reports', reportsRoutes);
 registerRoute('/settings', settingsRoutes);
 registerRoute('/pay', payRoutes);
 registerRoute('/portal', portalRoutes);
+// Phase 1 — New Routes
+registerRoute('/reminders', remindersRoutes);
+registerRoute('/enquiries', enquiriesRoutes);
+registerRoute('/expenses', expensesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -133,9 +141,19 @@ app.use((err, req, res, next) => {
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   const PORT = env.PORT || 5000;
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Database: Supabase (${env.SUPABASE_URL})`);
+
+    // Start Fee Reminder Cron — runs daily at 8:00 AM IST
+    try {
+      const cron = await import('node-cron');
+      const { runFeeReminderCron } = await import('./utils/reminderCron.js');
+      cron.default.schedule('0 8 * * *', runFeeReminderCron, { timezone: 'Asia/Kolkata' });
+      console.log(`🔔 Fee reminder cron scheduled — daily at 8:00 AM IST`);
+    } catch (e) {
+      console.warn('[Cron] node-cron not installed. Run: npm install node-cron');
+    }
   });
 }
 

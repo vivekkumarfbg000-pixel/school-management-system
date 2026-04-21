@@ -18,7 +18,9 @@ import {
   LogOut,
   Bell,
   Search,
-  Sparkles
+  Sparkles,
+  UserSearch,
+  IndianRupee
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AIChatBubble from '../ai/AIChatBubble';
@@ -68,6 +70,11 @@ const MainLayout = ({ user, handleLogout }) => {
     { id: 'settings', icon: <Settings size={20} />, label: 'Settings', path: '/settings' },
   ];
 
+  const growthNavItems = [
+    { id: 'enquiries', icon: <UserSearch size={20} />, label: 'Enquiries', path: '/enquiries' },
+    { id: 'expenses', icon: <IndianRupee size={20} />, label: 'Expenses & P&L', path: '/expenses' },
+  ];
+
   return (
     <div className="app-layout">
       {/* MOBILE TOP BAR */}
@@ -97,6 +104,20 @@ const MainLayout = ({ user, handleLogout }) => {
             <nav className="nav-section">
               <div className="nav-section-label">Main Menu</div>
               {navItems.map(item => (
+                <NavLink 
+                  key={item.id} 
+                  to={item.path} 
+                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-label">{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+
+            <nav className="nav-section" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--glass-border)' }}>
+              <div className="nav-section-label" style={{ color: 'var(--accent)' }}>Growth Tools ✨</div>
+              {growthNavItems.map(item => (
                 <NavLink 
                   key={item.id} 
                   to={item.path} 
