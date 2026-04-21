@@ -35,39 +35,14 @@ dotenv.config();
 
 const app = express();
 
-// Robust path normalization for Vercel & local environments
+// 1. URL Normalization for Vercel
 app.use((req, res, next) => {
-  const originalUrl = req.url;
-  
-  try {
-    // Basic parse using a dummy protocol since we only care about paths/queries here
-    const parsedUrl = new URL(req.url, `http://localhost`);
-    let cleanPath = parsedUrl.pathname;
-    
-    // 1. Remove common prefixes if they exist (to get the base path)
-    if (cleanPath.startsWith('/server-api')) {
-      cleanPath = cleanPath.substring(11);
-    } else if (cleanPath.startsWith('/api')) {
-      cleanPath = cleanPath.substring(4);
-    }
-    
-    // 2. Remove common internal remappings if they exist
-    if (cleanPath.startsWith('/index.js')) {
-      cleanPath = cleanPath.substring(9);
-    }
-    
-    // 3. Normalize purely to the resource path
-    parsedUrl.pathname = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
-    req.url = parsedUrl.pathname + parsedUrl.search;
-  } catch (err) {
-    console.warn('[Routing] Non-fatal URL rewrite error', err);
+  // If we are on Vercel, the path might be rewritten.
+  // We want to ensure that requests to /api/xyz are handled even if the prefix is stripped or doubled.
+  if (req.url.startsWith('/api/index.js')) {
+    req.url = req.url.replace('/api/index.js', '');
   }
-  
-  // Debug log for production (visible in Vercel logs)
-  if (originalUrl !== req.url && process.env.NODE_ENV === 'production') {
-     console.log(`[Routing] ${req.method} ${originalUrl} -> ${req.url}`);
-  }
-  
+  if (!req.url.startsWith('/') ) req.url = '/' + req.url;
   next();
 });
 
@@ -133,8 +108,13 @@ registerRoute('/visitors', visitorsRoutes);
 registerRoute('/bulk', bulkRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'EduStream SaaS API is running ✅', database: 'Supabase PostgreSQL' });
+app.get(['/health', '/api/health'], (req, res) => {
+  res.json({ 
+    status: 'EduStream SaaS API is running ✅', 
+    database: 'Supabase PostgreSQL',
+    env: process.env.NODE_ENV,
+    time: new Date().toISOString()
+  });
 });
 
 // Global Error Handler
