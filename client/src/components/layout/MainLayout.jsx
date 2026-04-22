@@ -65,7 +65,7 @@ const MainLayout = ({ user, handleLogout }) => {
     { id: 'payroll', icon: <Banknote size={20} />, label: 'Payroll', path: '/payroll' },
     { id: 'timetable', icon: <Calendar size={20} />, label: 'Timetable', path: '/timetable' },
     { id: 'transport', icon: <Bus size={20} />, label: 'Transport', path: '/transport' },
-    { id: 'library', icon: <Library size={20} />, label: 'Library', path: '/library' },
+
     { id: 'reports', icon: <BarChart3 size={20} />, label: 'Reports', path: '/reports' },
     { id: 'settings', icon: <Settings size={20} />, label: 'Settings', path: '/settings' },
   ];
@@ -196,22 +196,7 @@ const MainLayout = ({ user, handleLogout }) => {
                         </div>
                       )}
 
-                      {results.books.length > 0 && (
-                        <div className="search-section">
-                          <div className="search-section-label">Library Titles</div>
-                          {results.books.map(b => (
-                            <div key={b.id} className="search-result-item" onClick={() => navigate('/library')}>
-                              <div className="feed-icon" style={{width: '32px', height: '32px'}}><BookOpen size={16} /></div>
-                              <div className="search-result-info">
-                                <h4>{b.title}</h4>
-                                <p>{b.author} • {b.accession_no}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {!results.students.length && !results.staff.length && !results.books.length && (
+                      {!results.students.length && !results.staff.length && (
                         <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-muted)'}}>No results found for "{searchQuery}"</div>
                       )}
                     </>

@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { Users, UserPlus, Search, Trash2, ArrowRight, BadgeCheck, FileText } from 'lucide-react'
+import { Users, UserPlus, Search, Trash2, ArrowRight, BadgeCheck, FileText, UploadCloud } from 'lucide-react'
+import StudentBulkUpload from '../components/StudentBulkUpload'
 
 const Students = () => {
     const [search, setSearch] = useState('')
+    const [showUpload, setShowUpload] = useState(false)
     const queryClient = useQueryClient()
 
     const { data: students = [], isLoading } = useQuery({
@@ -70,12 +72,26 @@ const Students = () => {
                             onChange={e => setSearch(e.target.value)} 
                         />
                     </div>
+                    <button className="btn-secondary" onClick={() => setShowUpload(true)} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <UploadCloud size={18} />
+                        <span>Import Data</span>
+                    </button>
                     <button className="btn-primary">
                         <UserPlus size={18} />
                         <span>New Admission</span>
                     </button>
                 </div>
             </div>
+
+            {showUpload && (
+                <StudentBulkUpload 
+                    onClose={() => setShowUpload(false)} 
+                    onSuccess={() => {
+                        setShowUpload(false);
+                        queryClient.invalidateQueries({ queryKey: ['students'] });
+                    }} 
+                />
+            )}
 
             <div className="stats-grid">
                 <div className="stat-card">

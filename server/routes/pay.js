@@ -49,10 +49,12 @@ router.post('/verify', protect, asyncHandler(async (req, res) => {
     .update(sign.toString())
     .digest('hex');
 
-  // Skip strict signature check if we are in mock mode
-  const isMock = process.env.RAZORPAY_KEY_SECRET === undefined || process.env.RAZORPAY_KEY_SECRET === 'mock_secret_123';
+  // Enforce strict signature check in production. 
+  // Only bypass in explicit development mode if mock keys are used.
+  const isDevelopmentMock = process.env.NODE_ENV === 'development' && 
+                            (process.env.RAZORPAY_KEY_SECRET === undefined || process.env.RAZORPAY_KEY_SECRET === 'mock_secret_123');
   
-  if (razorpay_signature === expectedSign || isMock) {
+  if (razorpay_signature === expectedSign || isDevelopmentMock) {
       
       // If student info provided, internalize the payment into the ledger
       if (studentId) {

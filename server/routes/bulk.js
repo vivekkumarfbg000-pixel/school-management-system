@@ -9,7 +9,10 @@ router.post('/students', protect, authorize('ADMIN', 'PRINCIPAL'), asyncHandler(
   if (!Array.isArray(students)) return res.status(400).json({ message: 'students array required' });
   const records = students.map(s => ({ ...s, school_id: req.user.schoolId }));
   const { data, error } = await supabase.from('students').insert(records).select();
-  if (error) throw error;
+  if (error) {
+    console.error('[Bulk Import Error]', error);
+    return res.status(400).json({ message: error.details || error.message || 'Database insert failed' });
+  }
   res.status(201).json({ message: `Imported ${data.length} students`, data });
 }));
 

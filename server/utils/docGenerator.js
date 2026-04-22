@@ -35,9 +35,9 @@ export const generateStudentIdCard = (student, res) => {
         doc.font('Helvetica-Bold').fontSize(10).fillColor('#94A3B8').text('DOB:', 20, 290);
         doc.font('Helvetica').fillColor('#F8FAFC').text(new Date(student.dob).toLocaleDateString(), 60, 290);
 
-        // Footer Barcode Mock
-        doc.rect(40, 330, 160, 30).fill('#FFFFFF');
-        doc.font('Courier').fontSize(8).fillColor('#000000').text(`||||||| | ||| ${student.admission_no} ||||| ||`, 40, 340, { width: 160, align: 'center' });
+        // Footer - Clean ID Number Layout
+        doc.rect(40, 330, 160, 30).fill('#4F46E5');
+        doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF').text(`ID: ${student.admission_no}`, 40, 340, { width: 160, align: 'center' });
 
         doc.end();
         resolve();

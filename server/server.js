@@ -14,7 +14,7 @@ import staffRoutes from './routes/staff.js';
 import payrollRoutes from './routes/payroll.js';
 import timetableRoutes from './routes/timetable.js';
 import transportRoutes from './routes/transport.js';
-import libraryRoutes from './routes/library.js';
+
 import notificationRoutes from './routes/notifications.js';
 import dashboardRoutes from './routes/dashboard.js';
 import aiRoutes from './routes/ai.js';
@@ -85,7 +85,7 @@ registerRoute('/staff', staffRoutes);
 registerRoute('/payroll', payrollRoutes);
 registerRoute('/timetable', timetableRoutes);
 registerRoute('/transport', transportRoutes);
-registerRoute('/library', libraryRoutes);
+
 registerRoute('/notifications', notificationRoutes);
 registerRoute('/dashboard', dashboardRoutes);
 registerRoute('/ai', aiRoutes);

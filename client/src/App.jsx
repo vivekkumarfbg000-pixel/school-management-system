@@ -14,7 +14,7 @@ import Staff from './pages/Staff'
 import Payroll from './pages/Payroll'
 import Timetable from './pages/Timetable'
 import Transport from './pages/Transport'
-import Library from './pages/Library'
+
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import AIStudio from './pages/AIStudio'
@@ -62,7 +62,7 @@ const App = () => {
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/transport" element={<Transport />} />
-        <Route path="/library" element={<Library />} />
+
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         {/* Phase 1 — New Pages */}
