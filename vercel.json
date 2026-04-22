@@ -3,19 +3,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/(index.html)?",
-      "destination": "/dist/index.html"
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": "/dist/assets/$1"
-    },
-    {
-      "source": "/((?!api|assets|favicon.ico).*)",
-      "destination": "/dist/$1"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
