@@ -35,14 +35,9 @@ dotenv.config();
 
 const app = express();
 
-// 1. URL Normalization for Vercel
 app.use((req, res, next) => {
-  // If we are on Vercel, the path might be rewritten.
-  // We want to ensure that requests to /api/xyz are handled even if the prefix is stripped or doubled.
-  if (req.url.startsWith('/api/index.js')) {
-    req.url = req.url.replace('/api/index.js', '');
-  }
-  if (!req.url.startsWith('/') ) req.url = '/' + req.url;
+  // Ensure the path starts with a slash for Express routing consistency
+  if (!req.url.startsWith('/')) req.url = '/' + req.url;
   next();
 });
 
