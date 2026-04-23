@@ -30,6 +30,8 @@ import enquiriesRoutes from './routes/enquiries.js';
 import expensesRoutes from './routes/expenses.js';
 import visitorsRoutes from './routes/visitors.js';
 import bulkRoutes from './routes/bulk.js';
+import broadcastRoutes from './routes/broadcast.js';
+import webhookRoutes from './routes/webhook.js';
 
 dotenv.config();
 
@@ -101,6 +103,11 @@ registerRoute('/enquiries', enquiriesRoutes);
 registerRoute('/expenses', expensesRoutes);
 registerRoute('/visitors', visitorsRoutes);
 registerRoute('/bulk', bulkRoutes);
+registerRoute('/broadcast', broadcastRoutes);
+
+// Webhook for Meta WhatsApp integration (no /api prefix required by default, but let's mount it at /api/webhook)
+app.use('/webhook', webhookRoutes);
+app.use('/api/webhook', webhookRoutes);
 
 // Health check
 app.get(['/health', '/api/health'], (req, res) => {
@@ -124,12 +131,24 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Database: Supabase (${env.SUPABASE_URL})`);
 
-    // Start Fee Reminder Cron — runs daily at 8:00 AM IST
+    // Start Cron Jobs
     try {
       const cron = await import('node-cron');
       const { runFeeReminderCron } = await import('./utils/reminderCron.js');
+      const { runPrincipalDigestCron } = await import('./utils/principalDigestCron.js');
+      const { runMonthlyReportCron } = await import('./utils/monthlyReportCron.js');
+      
+      // Fee Reminder — runs daily at 8:00 AM IST
       cron.default.schedule('0 8 * * *', runFeeReminderCron, { timezone: 'Asia/Kolkata' });
       console.log(`🔔 Fee reminder cron scheduled — daily at 8:00 AM IST`);
+      
+      // Principal Digest — runs daily at 8:00 PM IST
+      cron.default.schedule('0 20 * * *', runPrincipalDigestCron, { timezone: 'Asia/Kolkata' });
+      console.log(`📊 Principal Digest cron scheduled — daily at 8:00 PM IST`);
+      
+      // Monthly Report — runs at 10:00 AM on the 1st of every month
+      cron.default.schedule('0 10 1 * *', runMonthlyReportCron, { timezone: 'Asia/Kolkata' });
+      console.log(`📈 Monthly Report cron scheduled — 1st of month at 10:00 AM IST`);
     } catch (e) {
       console.warn('[Cron] node-cron not installed. Run: npm install node-cron');
     }

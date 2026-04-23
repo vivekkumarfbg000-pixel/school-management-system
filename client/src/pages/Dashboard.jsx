@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   AreaChart, Area, Tooltip, ResponsiveContainer,
@@ -10,9 +11,9 @@ import {
 } from 'recharts'
 import { 
   Users, Wallet, ArrowUpRight, TrendingUp, Activity,
-  Loader2, Sparkles, CheckCircle, ArrowRight, Clock, AlertTriangle,
+  Loader2, Sparkles, CheckCircle, ArrowRight, Clock, TriangleAlert,
   BookOpen, Calendar, Plus, FileText, UserPlus, CreditCard,
-  ClipboardCheck, BarChart3, Library, Bell, RefreshCw
+  ClipboardCheck, ChartBarBig, Library, Bell, RefreshCw
 } from 'lucide-react'
 
 // Chart Colors 
@@ -78,6 +79,23 @@ const Dashboard = () => {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
   }
+
+  const handleEmergencyAlert = async () => {
+    const msg = window.prompt("🚨 EMERGENCY ALERT\n\nEnter the message to send to ALL parents and staff:");
+    if (!msg) return;
+
+    if (!window.confirm("Are you sure? This will send a WhatsApp message to every parent and staff member instantly.")) return;
+
+    const toastId = toast.loading("Broadcasting emergency alert...");
+    try {
+      await axios.post('/api/broadcast/emergency', { message: msg }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Emergency alert broadcasted successfully! 🚨", { id: toastId });
+    } catch (err) {
+      toast.error("Failed to send broadcast.", { id: toastId });
+    }
+  };
 
   const getGreeting = () => {
     const h = new Date().getHours()
@@ -166,12 +184,23 @@ const Dashboard = () => {
             Here's what's happening at <strong>{user?.school || 'EduStream'}</strong> today — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        {pendingTasks.total > 0 && (
-          <div className="hero-alert">
-            <AlertTriangle size={16} />
-            <span>{pendingTasks.total} pending task{pendingTasks.total > 1 ? 's' : ''} need attention</span>
-          </div>
-        )}
+        <div className="hero-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {user?.role === 'PRINCIPAL' && (
+            <button 
+              className="btn-glass" 
+              style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}
+              onClick={handleEmergencyAlert}
+            >
+              <AlertTriangle size={18} /> Emergency Panic
+            </button>
+          )}
+          {pendingTasks.total > 0 && (
+            <div className="hero-alert">
+              <AlertTriangle size={16} />
+              <span>{pendingTasks.total} task{pendingTasks.total > 1 ? 's' : ''}</span>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* ── Quick Actions ── */}
@@ -190,7 +219,8 @@ const Dashboard = () => {
 
       {/* ── KPI Stats Grid ── */}
       <motion.div variants={itemVars} className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card premium-card glow-indigo">
+          <div className="card-icon-floating"><Users size={80} /></div>
           <div className="stat-icon purple"><Users size={24} /></div>
           <div className="stat-value">{isLoading ? <span className="stat-skeleton" /> : dashData?.stats?.totalStudents || 0}</div>
           <div className="stat-label">Total Enrollment</div>
@@ -198,7 +228,8 @@ const Dashboard = () => {
             <ArrowUpRight size={12} /> Active students
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card premium-card glow-emerald">
+          <div className="card-icon-floating"><CheckCircle size={80} /></div>
           <div className="stat-icon green"><CheckCircle size={24} /></div>
           <div className="stat-value">{isLoading ? <span className="stat-skeleton" /> : `${dashData?.stats?.attendanceRate ?? 0}%`}</div>
           <div className="stat-label">Today's Attendance</div>
@@ -206,7 +237,8 @@ const Dashboard = () => {
             {(dashData?.stats?.attendanceRate ?? 0) < 90 ? 'Below threshold' : 'Healthy'}
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card premium-card glow-amber">
+          <div className="card-icon-floating"><Wallet size={80} /></div>
           <div className="stat-icon amber"><Wallet size={24} /></div>
           <div className="stat-value">{isLoading ? <span className="stat-skeleton" /> : `₹${(dashData?.stats?.monthlyRevenue || 0).toLocaleString('en-IN')}`}</div>
           <div className="stat-label">Monthly Revenue</div>
@@ -217,7 +249,8 @@ const Dashboard = () => {
             }
           </div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card premium-card">
+          <div className="card-icon-floating"><Activity size={80} /></div>
           <div className="stat-icon blue"><Activity size={24} /></div>
           <div className="stat-value">{isLoading ? <span className="stat-skeleton" /> : dashData?.stats?.totalStaff || 0}</div>
           <div className="stat-label">Active Staff</div>
@@ -230,7 +263,7 @@ const Dashboard = () => {
       {/* ── Charts Row: Enrollment + Attendance Donut + AI Pulse ── */}
       <motion.div variants={itemVars} className="analytics-overview-grid">
         {/* Enrollment Velocity Chart */}
-        <div className="card analytics-card" style={{ gridColumn: 'span 2' }}>
+        <div className="card analytics-card premium-card glow-indigo" style={{ gridColumn: 'span 2' }}>
           <div className="card-header">
             <h3 className="card-title"><TrendingUp size={16} className="text-primary" style={{ marginRight: '8px' }}/> Enrollment Velocity</h3>
             <span className="card-badge">6 months</span>
@@ -265,7 +298,7 @@ const Dashboard = () => {
         </div>
 
         {/* Attendance Distribution Donut */}
-        <div className="card analytics-card attendance-donut-card">
+        <div className="card analytics-card attendance-donut-card premium-card glow-emerald">
           <div className="card-header">
             <h3 className="card-title"><CheckCircle size={16} className="text-accent" style={{ marginRight: '8px' }}/> Attendance</h3>
             <span className="card-badge">Today</span>

@@ -15,16 +15,12 @@ const StudentBulkUpload = ({ onSuccess, onClose }) => {
   // 1. Download Template
   const handleDownloadTemplate = () => {
     const headers = [
-      'admission_no', 'name', 'father_name', 'mother_name', 
-      'class_name', 'section', 'dob', 'gender', 
-      'category', 'phone', 'address'
+      'name', 'class_name', 'section', 'phone', 'monthly_fee'
     ];
     
     // Example row
     const example = [
-      'ADM1001', 'Rahul Sharma', 'Vikas Sharma', 'Anjali Sharma',
-      '10', 'A', '2010-05-15', 'Male', 
-      'General', '9876543210', '123 Main St, Tech City'
+      'Rahul Sharma', '10', 'A', '9876543210', '2500'
     ];
 
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -69,17 +65,12 @@ const StudentBulkUpload = ({ onSuccess, onClose }) => {
       const issues = [];
 
       // Required fields
-      if (!row.admission_no) issues.push("Missing admission_no");
       if (!row.name) issues.push("Missing name");
-      if (!row.father_name) issues.push("Missing father_name");
       if (!row.class_name) issues.push("Missing class_name");
       if (!row.section) issues.push("Missing section");
+      if (!row.phone) issues.push("Missing phone");
+      if (!row.monthly_fee) issues.push("Missing monthly_fee");
       
-      // Date format validation (Basic check for YYYY-MM-DD or standard JS parseable)
-      if (!row.dob || isNaN(Date.parse(row.dob))) {
-        issues.push("Invalid DOB format (Use YYYY-MM-DD)");
-      }
-
       // Phone validation (exactly 10 digits)
       const phoneClean = (row.phone || '').toString().replace(/\D/g, '');
       if (phoneClean.length !== 10) {
@@ -88,11 +79,11 @@ const StudentBulkUpload = ({ onSuccess, onClose }) => {
         row.phone = phoneClean; // Normalize
       }
 
-      // File-level Duplicate check
-      if (row.admission_no && admnMap.has(row.admission_no)) {
-        issues.push(`Duplicate admission_no in file: ${row.admission_no}`);
+      // Fee validation
+      const fee = parseFloat(row.monthly_fee);
+      if (isNaN(fee) || fee < 0) {
+        issues.push(`Invalid monthly fee: ${row.monthly_fee}`);
       }
-      if (row.admission_no) admnMap.add(row.admission_no);
 
       if (issues.length > 0) {
         errs.push({ row: rowNum, data: row, issues });
@@ -100,11 +91,7 @@ const StudentBulkUpload = ({ onSuccess, onClose }) => {
         // Ensure defaults if missing optional fields
         valid.push({
           ...row,
-          dob: new Date(row.dob).toISOString(), // Standardize
-          mother_name: row.mother_name || 'N/A',
-          gender: row.gender || 'Not Specified',
-          category: row.category || 'General',
-          address: row.address || 'N/A'
+          monthly_fee: parseFloat(row.monthly_fee)
         });
       }
     });

@@ -26,6 +26,7 @@ import {
   buildFeeOverdue
 } from './whatsappProvider.js';
 import { sendFeeReminderSMS } from './smsProvider.js';
+import { generatePaymentLink } from './paymentProvider.js';
 
 /**
  * Determine which reminder type applies for a given fee
@@ -110,6 +111,8 @@ export async function runFeeReminderCron() {
   console.log(`[Fee Reminder Cron] Processing ${pendingFees?.length || 0} pending fees`);
   let sent = 0, skipped = 0;
 
+  const feesToRemind = [];
+
   for (const fee of (pendingFees || [])) {
     const student = fee.students;
     const school = student?.schools;
@@ -121,60 +124,88 @@ export async function runFeeReminderCron() {
     const alreadySent = await wasAlreadySent(fee.id, reminderType);
     if (alreadySent) { skipped++; continue; }
 
-    const outstanding = fee.amount - (fee.paid_amount || 0);
-    const phone = student.phone;
+    // Dynamic Late Fee Penalty Calculation
+    let lateFeePenalty = 0;
+    const isOverdue = reminderType.startsWith('overdue');
+    if (isOverdue) {
+       const daysPast = parseInt(reminderType.split('-')[1]) || 7;
+       if (daysPast >= 5) { // 5 days grace period
+          lateFeePenalty = (daysPast - 5) * 50; // ₹50/day
+       }
+    }
+
+    feesToRemind.push({ ...fee, reminderType, isOverdue, lateFeePenalty, schoolName: school.name, whatsappEnabled: school.whatsapp_enabled });
+  }
+
+  // Group by phone (Sibling Unified Billing)
+  const phoneGroups = {};
+  for (const fee of feesToRemind) {
+     const phone = fee.students.phone;
+     if (!phoneGroups[phone]) {
+         phoneGroups[phone] = { 
+             fees: [], 
+             totalOutstanding: 0, 
+             studentNames: new Set(),
+             isOverdue: false, // If any fee is overdue, mark group as overdue
+             schoolName: fee.schoolName,
+             whatsappEnabled: fee.whatsappEnabled,
+             maxDaysPast: 0
+         };
+     }
+     
+     const baseOutstanding = fee.amount - (fee.paid_amount || 0);
+     phoneGroups[phone].fees.push(fee);
+     phoneGroups[phone].totalOutstanding += baseOutstanding + fee.lateFeePenalty;
+     phoneGroups[phone].studentNames.add(fee.students.name);
+     
+     if (fee.isOverdue) {
+         phoneGroups[phone].isOverdue = true;
+         const daysPast = parseInt(fee.reminderType.split('-')[1]) || 7;
+         if (daysPast > phoneGroups[phone].maxDaysPast) phoneGroups[phone].maxDaysPast = daysPast;
+     }
+  }
+
+  for (const [phone, group] of Object.entries(phoneGroups)) {
+    const names = Array.from(group.studentNames).join(' and ');
+    const feeIds = group.fees.map(f => f.id).join('_');
+    const referenceId = group.fees.length > 1 ? `MULTI_${feeIds}` : feeIds;
+    
+    // Generate unified Payment Link
+    let paymentLink = null;
+    if (group.whatsappEnabled) {
+      paymentLink = await generatePaymentLink(group.totalOutstanding, names, phone, referenceId, `Combined Fee for ${names}`);
+    }
 
     // Build message
-    const isOverdue = reminderType.startsWith('overdue');
-    let message, waResult;
-
-    if (isOverdue) {
-      const daysPast = parseInt(reminderType.split('-')[1]) || 7;
-      message = buildFeeOverdue(student.name, outstanding, daysPast, fee.payment_link, school.name);
+    let message;
+    if (group.isOverdue) {
+      message = buildFeeOverdue(names, group.totalOutstanding, group.maxDaysPast, paymentLink, group.schoolName);
     } else {
+      // Just take the earliest due date for the reminder
+      const earliestDueDate = group.fees.reduce((min, f) => new Date(f.due_date) < new Date(min) ? f.due_date : min, group.fees[0].due_date);
       message = buildFeeReminder(
-        student.name, outstanding, fee.due_date, fee.fee_type, fee.payment_link, school.name
+        names, group.totalOutstanding, earliestDueDate, 'Combined', paymentLink, group.schoolName
       );
     }
 
-    // Send WhatsApp (primary)
-    if (school.whatsapp_enabled) {
-      waResult = await sendWhatsAppMessage(phone, message);
-      await logReminder({
-        feeId: fee.id,
-        studentId: student.id,
-        type: reminderType,
-        channel: 'whatsapp',
-        phone,
-        messagePreview: message,
-        status: waResult.success ? 'sent' : 'failed',
-        messageId: waResult.messageId,
-      });
-    }
-
-    // Send SMS (secondary, for overdue or if WhatsApp not enabled)
-    if (!school.whatsapp_enabled || isOverdue) {
-      if ((school.sms_credits || 0) > 0) {
-        const smsResult = await sendFeeReminderSMS(phone, student.name, outstanding, fee.due_date);
-        await logReminder({
-          feeId: fee.id,
-          studentId: student.id,
-          type: reminderType,
-          channel: 'sms',
-          phone,
-          messagePreview: message,
-          status: smsResult.success ? 'sent' : 'failed',
-          messageId: smsResult.messageId,
-        });
-        // Decrement SMS credits
-        await supabase
-          .from('schools')
-          .update({ sms_credits: Math.max(0, (school.sms_credits || 0) - 1) })
-          .eq('id', school.id);
+    // Send WhatsApp
+    if (group.whatsappEnabled) {
+      const waResult = await sendWhatsAppMessage(phone, message);
+      // Log for all fees in group
+      for (const fee of group.fees) {
+          await logReminder({
+            feeId: fee.id,
+            studentId: fee.students.id,
+            type: fee.reminderType,
+            channel: 'whatsapp',
+            phone,
+            messagePreview: message,
+            status: waResult.success ? 'sent' : 'failed',
+            messageId: waResult.messageId,
+          });
       }
+      sent++;
     }
-
-    sent++;
   }
 
   console.log(`[Fee Reminder Cron] Done — Sent: ${sent}, Skipped: ${skipped}`);

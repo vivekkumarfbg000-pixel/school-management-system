@@ -16,12 +16,19 @@
  */
 
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 const META_API_URL = 'https://graph.facebook.com/v21.0';
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_ID;
 const ACCESS_TOKEN = process.env.WHATSAPP_TOKEN;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 const isMock = !PHONE_NUMBER_ID || !ACCESS_TOKEN || process.env.WHATSAPP_MOCK === 'true';
+
+export const generatePortalLink = (studentId, schoolId) => {
+  const token = jwt.sign({ studentId, schoolId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return `${CLIENT_URL}/p/${token}`;
+};
 
 /**
  * Send a free-form text message (only within 24-hr customer service window)
@@ -125,6 +132,50 @@ export const sendWhatsAppBroadcast = async (phones, message) => {
   return { success: true, delivered, failed, total: phones.length, batchId: `batch_${Date.now()}` };
 };
 
+/**
+ * Broadcasts a general notice or exam result to parents of a specific class or entire school.
+ * @param {string} schoolId 
+ * @param {string} className - Optional. If null, sends to whole school.
+ * @param {string} message - The notice/message to broadcast
+ */
+export const broadcastToParents = async (schoolId, className, message) => {
+  try {
+    const { default: supabase } = await import('./supabaseClient.js');
+    let query = supabase
+      .from('students')
+      .select('phone, name')
+      .eq('school_id', schoolId)
+      .eq('status', 'Active')
+      .not('phone', 'is', null);
+
+    if (className) {
+      query = query.eq('class_name', className);
+    }
+
+    const { data: students, error } = await query;
+    if (error) throw error;
+    
+    if (!students || students.length === 0) return { success: true, count: 0 };
+    
+    // Group by unique phone numbers to avoid spamming parents with multiple kids
+    const uniquePhones = [...new Set(students.map(s => s.phone))];
+
+    const results = await Promise.allSettled(
+      uniquePhones.map(phone => {
+        const formattedMessage = `📢 *School Notice*\n\n${message}`;
+        return sendWhatsAppMessage(phone, formattedMessage);
+      })
+    );
+
+    const delivered = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
+
+    return { success: true, count: delivered, total: uniquePhones.length };
+  } catch (err) {
+    console.error("[WhatsApp] Broadcast failed:", err);
+    return { success: false, error: err.message };
+  }
+};
+
 // ────────────────────────────────────────────
 // Pre-built EduStream message builders
 // These build the message text — templates 
@@ -171,7 +222,8 @@ Late fees may apply. Please clear the dues at your earliest convenience.${linkSe
 For queries, contact the school office.`;
 };
 
-export const buildFeeReceipt = (studentName, amount, receiptNo, feeType, schoolName) => {
+export const buildFeeReceipt = (studentName, amount, receiptNo, feeType, schoolName, studentId, schoolId) => {
+  const portalLink = studentId && schoolId ? `\n\n📄 *View History & Receipts:* ${generatePortalLink(studentId, schoolId)}` : '';
   return `✅ *Payment Received — ${schoolName}*
 
 Dear Parent,
@@ -179,7 +231,7 @@ Dear Parent,
 We acknowledge receipt of *₹${amount.toLocaleString('en-IN')}* for *${studentName}*'s ${feeType} fee.
 
 🧾 *Receipt No:* ${receiptNo}
-📅 *Date:* ${new Date().toLocaleDateString('en-IN')}
+📅 *Date:* ${new Date().toLocaleDateString('en-IN')}${portalLink}
 
 Thank you for the timely payment! 🙏`;
 };

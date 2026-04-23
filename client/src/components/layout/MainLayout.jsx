@@ -9,11 +9,11 @@ import {
   Banknote,
   BookOpen, 
   Megaphone, 
-  UserSquare, 
+  SquareUser, 
   Calendar, 
   Bus, 
   Library, 
-  BarChart3, 
+  ChartBarBig, 
   Settings,
   LogOut,
   Bell,
@@ -61,18 +61,19 @@ const MainLayout = ({ user, handleLogout }) => {
     { id: 'finance', icon: <Wallet size={20} />, label: 'Finance', path: '/finance' },
     { id: 'academics', icon: <BookOpen size={20} />, label: 'Academics', path: '/academics' },
     { id: 'communication', icon: <Megaphone size={20} />, label: 'Broadcast', path: '/communication' },
-    { id: 'staff', icon: <UserSquare size={20} />, label: 'Staff', path: '/staff' },
+    { id: 'staff', icon: <SquareUser size={20} />, label: 'Staff', path: '/staff' },
     { id: 'payroll', icon: <Banknote size={20} />, label: 'Payroll', path: '/payroll' },
     { id: 'timetable', icon: <Calendar size={20} />, label: 'Timetable', path: '/timetable' },
     { id: 'transport', icon: <Bus size={20} />, label: 'Transport', path: '/transport' },
 
-    { id: 'reports', icon: <BarChart3 size={20} />, label: 'Reports', path: '/reports' },
+    { id: 'reports', icon: <ChartBarBig size={20} />, label: 'Reports', path: '/reports' },
     { id: 'settings', icon: <Settings size={20} />, label: 'Settings', path: '/settings' },
   ];
 
   const growthNavItems = [
     { id: 'enquiries', icon: <UserSearch size={20} />, label: 'Enquiries', path: '/enquiries' },
     { id: 'expenses', icon: <IndianRupee size={20} />, label: 'Expenses & P&L', path: '/expenses' },
+    { id: 'magic-import', icon: <Sparkles size={20} />, label: 'Magic Import', path: '/magic-import' },
   ];
 
   return (
@@ -236,25 +237,27 @@ const MainLayout = ({ user, handleLogout }) => {
       </main>
 
       {/* MOBILE BOTTOM NAV */}
-      <nav className="mobile-nav">
+      <nav className="mobile-nav glass-nav">
         <NavLink to="/" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-          <span className="mobile-nav-icon">📊</span>
+          <LayoutDashboard className="mobile-nav-icon" size={22} />
           <span>Home</span>
         </NavLink>
         <NavLink to="/students" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-          <span className="mobile-nav-icon">🎓</span>
+          <Users className="mobile-nav-icon" size={22} />
           <span>Students</span>
         </NavLink>
         <NavLink to="/attendance" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-          <span className="mobile-nav-icon">✅</span>
+          <CheckCircle className="mobile-nav-icon" size={22} />
           <span>Attnd.</span>
         </NavLink>
-        <NavLink to="/finance" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-          <span className="mobile-nav-icon">💰</span>
-          <span>Fees</span>
+        <NavLink to="/quick-collect" className={({ isActive }) => `mobile-nav-item collect-nav-item ${isActive ? 'active' : ''}`}>
+          <div className="collect-btn-wrapper">
+             <Wallet size={24} color="white" />
+          </div>
+          <span>Collect</span>
         </NavLink>
         <NavLink to="/settings" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
-          <span className="mobile-nav-icon">⚙️</span>
+          <Settings className="mobile-nav-icon" size={22} />
           <span>Menu</span>
         </NavLink>
       </nav>

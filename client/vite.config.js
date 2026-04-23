@@ -14,6 +14,9 @@ export default defineConfig({
         short_name: 'EduStream',
         description: 'Modern School Management System',
         theme_color: '#4f46e5',
+        background_color: '#030712',
+        display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
             src: 'favicon.svg',

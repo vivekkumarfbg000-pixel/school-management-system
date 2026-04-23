@@ -712,40 +712,43 @@ tr:hover td {
     justify-content: center;
   }
 
-  .mobile-nav {
+  .mobile-nav.glass-nav {
     display: flex;
     justify-content: space-around;
     align-items: center;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    padding-bottom: env(safe-area-inset-bottom, 15px); /* iOS safe area */
-    background: var(--bg-surface);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-top: 1px solid var(--glass-border);
-    z-index: 100;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 70px;
+    padding-bottom: 0;
+    background: hsla(222, 47%, 13%, 0.4);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    border-radius: var(--radius-2xl);
+    z-index: 1000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px hsla(0, 0%, 100%, 0.05);
   }
 
   .mobile-nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.2rem;
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
     padding: 0.5rem;
-    transition: var(--transition-fast);
+    transition: var(--transition-bounce);
+    flex: 1;
   }
 
   .mobile-nav-icon {
-    font-size: 1.25rem;
-    margin-bottom: 0.15rem;
-    transition: var(--transition-fast);
+    margin-bottom: 0.1rem;
+    transition: var(--transition-bounce);
+    opacity: 0.6;
   }
 
   .mobile-nav-item.active {
@@ -753,7 +756,31 @@ tr:hover td {
   }
 
   .mobile-nav-item.active .mobile-nav-icon {
-    transform: scale(1.1);
+    transform: translateY(-4px);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px var(--primary-glow));
+  }
+
+  .collect-nav-item {
+    margin-top: -30px;
+  }
+
+  .collect-btn-wrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(129, 140, 248, 0.4);
+    border: 4px solid var(--bg-base);
+    transition: var(--transition-bounce);
+  }
+
+  .mobile-nav-item.active .collect-btn-wrapper {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 12px 30px rgba(129, 140, 248, 0.5);
   }
 
   .main-content {
@@ -1245,6 +1272,37 @@ tr:hover td {
 
 .analytics-card {
   padding: 1.5rem;
+  background: hsla(222, 47%, 13%, 0.6);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  transition: var(--transition-smooth);
+}
+
+.premium-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, hsla(222, 47%, 15%, 0.9), hsla(222, 47%, 10%, 0.9));
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at center, var(--primary-glow) 0%, transparent 50%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.premium-card.glow-indigo { border-color: hsla(238, 81%, 67%, 0.3); box-shadow: 0 10px 30px -10px hsla(238, 81%, 67%, 0.2); }
+.premium-card.glow-emerald { border-color: hsla(170, 75%, 45%, 0.3); box-shadow: 0 10px 30px -10px hsla(170, 75%, 45%, 0.2); }
+.premium-card.glow-amber { border-color: hsla(45, 93%, 55%, 0.3); box-shadow: 0 10px 30px -10px hsla(45, 93%, 55%, 0.2); }
+
+.card-icon-floating {
+  position: absolute;
+  top: 1.5rem; right: 1.5rem;
+  opacity: 0.1;
+  transform: scale(2) rotate(-15deg);
+  pointer-events: none;
 }
 
 .school-pulse-card {

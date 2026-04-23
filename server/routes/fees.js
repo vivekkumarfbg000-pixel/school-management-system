@@ -3,6 +3,7 @@ const router = express.Router();
 import supabase from '../utils/supabaseClient.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { sendSMS } from '../utils/smsProvider.js';
+import { sendWhatsAppMessage, buildFeeReceipt } from '../utils/whatsappProvider.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 // GET /api/fees — returns all students with their fee summaries
@@ -77,6 +78,17 @@ router.post('/collect', protect, authorize('ADMIN', 'ACCOUNTANT'), asyncHandler(
     .select()
     .single();
   if (uErr) throw uErr;
+
+  // Trigger WhatsApp Receipt
+  try {
+    const { data: student } = await supabase.from('students').select('name, phone').eq('id', studentId).single();
+    if (student && student.phone) {
+      const receiptMessage = buildFeeReceipt(student.name, amountPaid, receiptNo, feeType, "EduStream School");
+      await sendWhatsAppMessage(student.phone, receiptMessage);
+    }
+  } catch (waErr) {
+    console.error("WhatsApp receipt failed", waErr);
+  }
 
   res.json({ message: 'Payment collected successfully', receiptNo, fee: updated });
 }));

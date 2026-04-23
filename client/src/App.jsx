@@ -21,6 +21,9 @@ import AIStudio from './pages/AIStudio'
 import Enquiries from './pages/Enquiries'
 import Expenses from './pages/Expenses'
 import Login from './pages/Login'
+import QuickCollect from './pages/QuickCollect'
+import MagicImport from './pages/MagicImport'
+import ParentPortal from './pages/ParentPortal'
 
 const App = () => {
   const { token, user, logout } = useAuth()
@@ -33,6 +36,15 @@ const App = () => {
       document.documentElement.classList.remove('light-theme')
     }
   }, [])
+
+  // Public Routes (Trust Portal)
+  if (window.location.pathname.startsWith('/p/')) {
+    return (
+      <Routes>
+        <Route path="/p/:token" element={<ParentPortal />} />
+      </Routes>
+    )
+  }
 
   if (!token) return <Login />
 
@@ -68,6 +80,8 @@ const App = () => {
         {/* Phase 1 — New Pages */}
         <Route path="/enquiries" element={<Enquiries />} />
         <Route path="/expenses" element={<Expenses />} />
+        <Route path="/magic-import" element={<MagicImport />} />
+        <Route path="/quick-collect" element={<QuickCollect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

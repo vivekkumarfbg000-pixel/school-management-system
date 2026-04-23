@@ -3,6 +3,7 @@ const router = express.Router();
 import supabase from '../utils/supabaseClient.js';
 import { protect, requireClassOwnership } from '../middleware/auth.js';
 import { sendSMS } from '../utils/smsProvider.js';
+import { sendWhatsAppMessage } from '../utils/whatsappProvider.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 // GET /api/attendance?className=10&section=A&date=2026-03-14
@@ -57,21 +58,34 @@ router.post('/batch', protect, requireClassOwnership(), asyncHandler(async (req,
     .upsert(attendanceData, { onConflict: 'student_id,date' });
   if (upsertError) throw upsertError;
 
-  // Trigger SMS for Absent Students
-  const absentIds = records.filter(r => r.status === 'ABSENT').map(r => r.studentId);
+  // Trigger WhatsApp + SMS for Absent Students
+  const absentIds = records.filter(r => r.status && r.status.toUpperCase() === 'ABSENT').map(r => r.studentId);
   
   if (absentIds.length > 0) {
-    // Fetch phone numbers for absent students
+    // Fetch phone numbers for absent students and school details
     const { data: studentsWithPhones, error: pErr } = await supabase
       .from('students')
-      .select('name, phone')
+      .select('name, phone, school_id')
       .in('id', absentIds);
     
     if (!pErr && studentsWithPhones) {
       for (const student of studentsWithPhones) {
         if (student.phone) {
-          const msg = `Dear Parent, your child ${student.name} was marked ABSENT today. Please contact the school office.`;
-          await sendSMS(student.phone, msg); 
+          const msg = `⚠️ *Attendance Alert*\nDear Parent, your child ${student.name} was marked ABSENT today. If you are unaware, please contact the school office.`;
+          
+          // Send WhatsApp (Primary)
+          try {
+             await sendWhatsAppMessage(student.phone, msg);
+          } catch (waErr) {
+             console.error("[Attendance] Failed to send WhatsApp alert:", waErr);
+          }
+
+          // Fallback to SMS
+          try {
+             await sendSMS(student.phone, msg);
+          } catch (smsErr) {
+             // Ignore
+          }
         }
       }
     }
