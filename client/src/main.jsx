@@ -7,6 +7,10 @@ import { AuthProvider } from './context/AuthContext'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import './index.css'
 import App from './App.jsx'
+import { registerSW } from 'virtual:pwa-register'
+
+// Register Service Worker for PWA
+registerSW({ immediate: true })
 
 const queryClient = new QueryClient({
   defaultOptions: {
